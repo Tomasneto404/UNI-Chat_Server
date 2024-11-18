@@ -4,8 +4,14 @@ import java.io.*;
 
 public class UserInterface {
 
+    private String usersFile;
+
     {
 
+    }
+
+    public void setUsersFile(String file) {
+        usersFile = file;
     }
 
     public void displayMainMenu(BufferedReader reader, PrintWriter writer) throws IOException {
@@ -96,7 +102,11 @@ public class UserInterface {
 
         if (password.equals(repeatPassword)) {
 
+            User tmpUser = new User(username, password);
 
+            FileWriter fileWriter = new FileWriter(usersFile);
+            fileWriter.write(tmpUser.toString());
+            fileWriter.close();
 
             return true;
         }

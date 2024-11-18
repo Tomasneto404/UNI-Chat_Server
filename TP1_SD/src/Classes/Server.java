@@ -23,7 +23,7 @@ public class Server {
                 Socket clientSocket = ss.accept();
                 System.out.println("Received connection from " + clientSocket.getInetAddress());
 
-                Thread clientThread = new Thread(new ClientHandler(clientSocket));
+                Thread clientThread = new Thread(new ClientHandler(clientSocket, USERS_FILE));
                 clientThread.start();
             }
 
