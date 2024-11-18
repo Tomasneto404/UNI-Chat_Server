@@ -16,5 +16,8 @@ public class User {
         this.password = password;
     }
 
+    public Rank getRank(){
+        return this.rank;
+    }
 
 }
