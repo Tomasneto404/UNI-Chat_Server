@@ -5,6 +5,8 @@ import java.net.*;
 
 public class Server {
 
+    private final String USERS_FILE = "Users.txt";
+
     private int port;
 
     public Server(int port) {
