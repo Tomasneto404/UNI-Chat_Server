@@ -92,5 +92,5 @@ public class Group {
         return type;
     }
 
-    
+    //adicionar a mensagem
 }
