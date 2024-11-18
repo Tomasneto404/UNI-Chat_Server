@@ -94,6 +94,7 @@ public class ClientHandler implements Runnable {
                     writer.println("Invalid option!.");
             }
         }
+        return true;
     }
 
     private void sendMessage(BufferedReader reader, PrintWriter writer) throws IOException {
