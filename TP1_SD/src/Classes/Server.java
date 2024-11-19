@@ -6,6 +6,9 @@ import java.net.*;
 public class Server {
 
     private final String USERS_FILE = "Users.txt";
+    private final String MESSAGES_FILE = "Messages.txt";
+
+    private User[] users;
 
     private int port;
 

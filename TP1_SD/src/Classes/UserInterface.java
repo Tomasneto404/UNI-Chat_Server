@@ -1,13 +1,18 @@
 package Classes;
 
+import Enums.Rank;
+import Exceptions.StopReadingException;
+
 import java.io.*;
+import java.util.*;
 
 public class UserInterface {
 
     private String usersFile;
+    private List<User> users;
 
     {
-
+        this.users = new ArrayList<>();
     }
 
     public void setUsersFile(String file) {
@@ -15,20 +20,31 @@ public class UserInterface {
     }
 
     public void displayMainMenu(BufferedReader reader, PrintWriter writer) throws IOException {
+
+        //Load data from files to memory
+        loadData();
+
         writer.println("\n--- Welcome to the CHAT ---");
 
         boolean authenticated = false;
 
         while (!authenticated) {
-            authenticated = displayAuthMenu(reader, writer);
+            try {
+                authenticated = displayAuthMenu(reader, writer);
+            } catch (StopReadingException e) {
+                System.out.println(e.getMessage());
+                return;
+            }
+
         }
+
+
 
         while (true) {
 
             writer.println("\n--- Menu ---");
-            writer.println("1. Send Message");
-            writer.println("2. Channels");
-            writer.println("3. Messages");
+            writer.println("1. Channels");
+            writer.println("2. Notifications");
             writer.println("4. Exit");
             writer.println("Option > ");
 
@@ -40,19 +56,14 @@ public class UserInterface {
 
             switch (option) {
                 case "1":
-                    //sendMessage(reader, writer);
                     break;
                 case "2":
-                    //joinChannel(reader, writer);
-                    break;
-                case "3":
-                    //viewMessages(writer);
                     break;
                 case "4":
-                    writer.println("Disconnected!");
+                    writer.println("\nDisconnected!");
                     return;
                 default:
-                    writer.println("Invalid option!.");
+                    writer.println("\nInvalid option!.");
             }
         }
     }
@@ -75,12 +86,12 @@ public class UserInterface {
 
             switch (option) {
                 case "1":
-                    return registUser(reader, writer);
+                    registUser(reader, writer);
                 case "2":
                     return loginUser(reader, writer);
                 case "3":
                     writer.println("Disconnected!");
-                    return false;
+                    throw new StopReadingException("User disconnected!");
 
                 default:
                     writer.println("Invalid option!.");
@@ -89,64 +100,117 @@ public class UserInterface {
         return true;
     }
 
-    private boolean registUser(BufferedReader reader, PrintWriter writer) throws IOException {
+    private void registUser(BufferedReader reader, PrintWriter writer) throws IOException {
 
-        writer.println("Enter Username:");
+        writer.println("Enter Username: ");
         String username = reader.readLine();
 
-        writer.println("Enter Password:");
+        writer.println("Rank: " +
+                "1 - HIGH | " +
+                "2 - MEDIUM | " +
+                "3 - LOW");
+        String inputRank = reader.readLine();
+
+        Rank rank;
+
+        switch (inputRank) {
+            case "1":
+                rank = Rank.HIGH;
+                break;
+            case "2":
+                rank = Rank.MEDIUM;
+                break;
+            case "3":
+                rank = Rank.LOW;
+                break;
+            default:
+                rank = Rank.NONE;
+        }
+
+
+
+        writer.println("Enter Password: ");
         String password = reader.readLine();
 
-        writer.println("Repeat Password:");
+        writer.println("Repeat Password: ");
         String repeatPassword = reader.readLine();
 
         if (password.equals(repeatPassword)) {
 
-            User tmpUser = new User(username, password);
-            tmpUser.writeToFile(usersFile);
+            User tmpUser = new User(username, rank, password);
 
+            if (!searchUser(tmpUser)) {
+                tmpUser.writeToFile(usersFile);
+            } else {
+                writer.println("User already exists!");
+            }
+
+        } else {
+
+            writer.println("\nPasswords do not match!");
+
+        }
+
+    }
+
+    private boolean loginUser(BufferedReader reader, PrintWriter writer) throws IOException {
+
+        loadData();
+
+        writer.println("Username ");
+        String username = reader.readLine();
+
+        writer.println("Password ");
+        String password = reader.readLine();
+
+        User tmpUser = new User(username, password);
+
+        if (searchUser(tmpUser)) {
+            writer.println("Authenticated!");
+            System.out.println("User <" + tmpUser.getName() + "> logged in successfully!");
             return true;
+        }
+
+        writer.println("User not found!");
+        return false;
+    }
+
+    private void loadData(){
+
+        //Carregar utilizadores para array
+        try (BufferedReader br = new BufferedReader(new FileReader(usersFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+
+                String[] parts = line.split(";");
+                if (parts.length == 4) {
+
+                    int id = Integer.parseInt(parts[0]);
+                    String name = parts[1];
+                    String password = parts[2];
+
+                    Rank rank = Rank.valueOf(parts[3]);
+
+                    users.add(new User(id, name, password, rank));
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
+
+    }
+
+    public boolean searchUser(User userToSearch) {
+
+        if (!users.isEmpty()){
+            for (User user : users) {
+                if ( user.getName().equals(userToSearch.getName()) ) {
+                    return true;
+                }
+            }
         }
 
         return false;
     }
-
-    private boolean loginUser(BufferedReader reader, PrintWriter writer) throws IOException {
-        writer.println("Username ");
-        String username = reader.readLine();
-        writer.println("Password ");
-        String password = reader.readLine();
-        return true;
-    }
-
-    /*
-    private void sendMessage(BufferedReader reader, PrintWriter writer) throws IOException {
-        writer.println("Digite o ID do destinatário: ");
-        String recipientId = reader.readLine();
-
-        writer.println("Digite a mensagem: ");
-        String message = reader.readLine();
-
-        // Simula o envio da mensagem (a lógica real pode salvar ou enviar para outro cliente)
-        writer.println("Mensagem enviada para " + recipientId + ": " + message);
-    }
-
-    private void joinChannel(BufferedReader reader, PrintWriter writer) throws IOException {
-        writer.println("Digite o nome do canal: ");
-        String channelName = reader.readLine();
-
-        // Simula a entrada no canal
-        writer.println("Você entrou no canal: " + channelName);
-    }
-
-    private void viewMessages(PrintWriter writer) {
-        // Simula a exibição de mensagens (a lógica real puxaria mensagens de um banco de dados ou memória)
-        writer.println("\n--- Suas Mensagens ---");
-        writer.println("1. Mensagem de exemplo 1");
-        writer.println("2. Mensagem de exemplo 2");
-        writer.println("END_OF_MESSAGES");
-    }*/
-
-
 
 }

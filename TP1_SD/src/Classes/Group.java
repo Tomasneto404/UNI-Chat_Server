@@ -4,12 +4,15 @@ import java.util.*;
 import Enums.Rank;
 
 public class Group {
+
     private static int CAPACITY = 20;
     private int groupId;
     private String groupName;
     private Rank type;
     private User[] members;
     private int counter;
+
+    private Message[] messages;
 
     public Group() {
         this.groupId = 0;
@@ -93,4 +96,7 @@ public class Group {
     }
 
     //adicionar a mensagem
+    public void addMessage(Message message) {
+
+    }
 }

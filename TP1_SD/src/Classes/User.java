@@ -17,26 +17,41 @@ public class User {
         this.password = password;
     }
 
+    //É preciso alterar
     public User (String name, String password) {
-        this.id = 0000;
+        this.id = 0;
         this.name = name;
         this.password = password;
         this.rank = Rank.NONE;
+    }
+
+    public User(int id, String name, String password, Rank rank) {
+        this.id = id;
+        this.name = name;
+        this.password = password;
+        this.rank = rank;
+    }
+
+    protected String getName() {
+        return name;
+    }
+
+    protected String getPassword() {
+        return password;
     }
 
     public Rank getRank(){
         return this.rank;
     }
 
-    @Override
-    public String toString(){
-        return this.id + ";" + this.name + ";" + this.password + ";" + this.rank + "\n";
+    private String toCSV(String chr){
+        return this.id + chr + this.name + chr + this.password + chr + this.rank + "\n";
     }
 
     public void writeToFile(String file) throws IOException {
 
         FileWriter fileWriter = new FileWriter(file, true);
-        fileWriter.append(this.toString());
+        fileWriter.append(this.toCSV(";"));
         fileWriter.close();
 
     }

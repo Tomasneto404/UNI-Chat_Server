@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 
 public class ClientHandler implements Runnable {
+
     private Socket clientSocket;
     private String usersFile;
 
@@ -13,7 +14,7 @@ public class ClientHandler implements Runnable {
     }
 
     @Override
-    public void run() {
+    public synchronized void run() {
         try {
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));

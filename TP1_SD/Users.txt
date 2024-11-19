@@ -1,1 +1,1 @@
-0;tomas;password;NONE
+0;tomas;wasd;NONE
