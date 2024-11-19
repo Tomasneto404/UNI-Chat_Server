@@ -2,6 +2,8 @@ package Classes;
 
 import Enums.Rank;
 
+import java.io.*;
+
 public class User {
 
     private int id;
@@ -16,8 +18,10 @@ public class User {
     }
 
     public User (String name, String password) {
+        this.id = 0000;
         this.name = name;
         this.password = password;
+        this.rank = Rank.NONE;
     }
 
     public Rank getRank(){
@@ -26,7 +30,15 @@ public class User {
 
     @Override
     public String toString(){
-        return this.name + " " + this.password;
+        return this.id + ";" + this.name + ";" + this.password + ";" + this.rank + "\n";
+    }
+
+    public void writeToFile(String file) throws IOException {
+
+        FileWriter fileWriter = new FileWriter(file, true);
+        fileWriter.append(this.toString());
+        fileWriter.close();
+
     }
 
 }

@@ -103,10 +103,7 @@ public class UserInterface {
         if (password.equals(repeatPassword)) {
 
             User tmpUser = new User(username, password);
-
-            FileWriter fileWriter = new FileWriter(usersFile);
-            fileWriter.write(tmpUser.toString());
-            fileWriter.close();
+            tmpUser.writeToFile(usersFile);
 
             return true;
         }
