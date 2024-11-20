@@ -86,11 +86,10 @@ public class Group {
 
     }
 
-    public void loadFromFile(String fp)throws IOException{
-        try(BufferedReader reader= new BufferedReader(new FileReader(fp))){
+    public void loadFromFile(String fp) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new FileReader(fp))) {
             String line = reader.readLine();
 
-           
             String[] groupInfo = line.split(";");
             this.groupId = Integer.parseInt(groupInfo[0]);
             this.groupName = groupInfo[1];
@@ -109,12 +108,12 @@ public class Group {
                 }
             }
 
-            
             while (line != null && (line = reader.readLine()) != null) {
                 String[] parts = line.split(";");
                 int messageId = Integer.parseInt(parts[0]);
                 String content = parts[1];
-                messages.add(new Message(messageId, content)); 
+                messages.add(new Message(messageId, content));
+            }
         }
 
     }
