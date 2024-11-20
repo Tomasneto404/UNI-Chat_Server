@@ -1,86 +1,48 @@
 package Classes;
 
+import java.io.*;
 import java.util.*;
 import Enums.Rank;
 
 public class Group {
 
-    private static int CAPACITY = 20;
+    private static final int INITIAL_CAPACITY = 20;
     private int groupId;
     private String groupName;
     private Rank type;
-    private User[] members;
-    private int counter;
-
-    private Message[] messages;
+    private List<User> members;
+    private List<Message> messages;
 
     public Group() {
         this.groupId = 0;
         this.groupName = null;
         this.type = null;
-        this.members = new User[CAPACITY];
-        this.counter = 0;
+        this.members = new ArrayList<>(INITIAL_CAPACITY);
+        this.messages = new ArrayList<>();
     }
 
     public Group(int groupId, String groupName, Rank type) {
         this.groupId = groupId;
         this.groupName = groupName;
         this.type = type;
-        this.members = new User[CAPACITY];
-        this.counter = 0;
-    }
-
-    private void expandCapacity() {
-        User[] tmp = new User[CAPACITY * 2];
-        for (int i = 0; i < this.counter; i++) {
-            tmp[i] = members[i];
-        }
-
-        this.members = tmp;
+        this.members = new ArrayList<>(INITIAL_CAPACITY);
+        this.messages = new ArrayList<>();
     }
 
     public boolean contains(User user) {
-        for (int i = 0; i < this.counter; i++) {
-            if (members[i].equals(user)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public int posMember(User user) {
-        for (int i = 0; i < this.counter; i++) {
-            if (members[i].equals(user)) {
-                return i;
-            }
-        }
-        return -1;
+        return members.contains(user);
     }
 
     public void addMember(User user) {
-
-        if (this.counter == CAPACITY) {
-            expandCapacity();
-        }
-
         if (!contains(user)) {
             if (user.getRank().equals(this.type)) {
-                this.members[this.counter++] = user;
+                members.add(user);
             }
         }
     }
 
     public void removeMember(User user) {
-        if (contains(user)) {
-            int pos = posMember(user);
-
-            for(int i = pos; i<this.counter -1; i++){
-                this.members[i]=this.members[i+1];
-            }
-
-            this.members[this.counter - 1] = null; 
-            this.counter--;
-        }
+        members.remove(user);
     }
 
     public int getGroupId() {
@@ -95,8 +57,65 @@ public class Group {
         return type;
     }
 
-    //adicionar a mensagem
     public void addMessage(Message message) {
+        messages.add(message);
+    }
+
+    public List<User> getMembers() {
+        return new ArrayList<>(members);
+    }
+
+    public List<Message> getMessages() {
+        return new ArrayList<>(messages);
+    }
+
+    public void saveToFile(String fp) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fp))) {
+            writer.write(groupId + ";" + groupName + ";" + type + "\n");
+
+            writer.write("Members: \n");
+            for (User member : members) {
+                writer.write(member.toString() + "\n");
+            }
+
+            writer.write("Messages: \n");
+            for (Message message : messages) {
+                writer.write(message.toString() + "\n");
+            }
+        }
+
+    }
+
+    public void loadFromFile(String fp)throws IOException{
+        try(BufferedReader reader= new BufferedReader(new FileReader(fp))){
+            String line = reader.readLine();
+
+           
+            String[] groupInfo = line.split(";");
+            this.groupId = Integer.parseInt(groupInfo[0]);
+            this.groupName = groupInfo[1];
+            this.type = Rank.valueOf(groupInfo[2]);
+
+            members.clear();
+            messages.clear();
+
+            while ((line = reader.readLine()) != null && !line.equals("MESSAGES:")) {
+                if (!line.equals("MEMBERS:")) {
+                    String[] parts = line.split(";");
+                    int id = Integer.parseInt(parts[0]);
+                    String name = parts[1];
+                    Rank rank = Rank.valueOf(parts[2]);
+                    members.add(new User(id, name, rank));
+                }
+            }
+
+            
+            while (line != null && (line = reader.readLine()) != null) {
+                String[] parts = line.split(";");
+                int messageId = Integer.parseInt(parts[0]);
+                String content = parts[1];
+                messages.add(new Message(messageId, content)); 
+        }
 
     }
 }

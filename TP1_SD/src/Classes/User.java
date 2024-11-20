@@ -11,6 +11,12 @@ public class User {
     private Rank rank;
     private String password;
 
+    //preciso disto tomás, não apagues
+    public User(int id, String name, Rank rank){
+        this.id=id;
+        this.name=name;
+        this.rank=rank;
+    }
     public User( String name, Rank rank, String password) {
         this.name = name;
         this.rank = rank;
