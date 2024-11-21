@@ -1,5 +1,6 @@
-package Classes;
+package inTest;
 
+import Classes.User;
 import Enums.OperationType;
 import Enums.Rank;
 
@@ -39,6 +40,7 @@ public class Operation {
         return this.finalized;
     }
 
+    /*
     public void approve(User approver) throws Exception {
         validateApproval(approver);
         this.approver = approver;
@@ -55,7 +57,7 @@ public class Operation {
         this.finalized = true;
         this.finalizedAt = LocalDateTime.now();
         notifyOperation("REJECTED by " + approver.getName());
-    }
+    }*/
 
     private void validateApproval(User approver) throws Exception {
         if (this.finalized) {

@@ -39,14 +39,13 @@ public class UserInterface {
         }
 
 
-
         while (true) {
 
             writer.println("\n--- Menu ---");
             writer.println("1. Channels");
             writer.println("2. Notifications");
             writer.println("4. Exit");
-            writer.println("Option > ");
+            writer.println("Option:");
 
             String option = reader.readLine();
 
@@ -76,7 +75,7 @@ public class UserInterface {
             writer.println("1. Register");
             writer.println("2. Login");
             writer.println("3. Exit");
-            writer.println("Option > ");
+            writer.println("Option: ");
 
             String option = reader.readLine();
 
@@ -157,10 +156,10 @@ public class UserInterface {
 
         loadData();
 
-        writer.println("Username ");
+        writer.println("Username: ");
         String username = reader.readLine();
 
-        writer.println("Password ");
+        writer.println("Password: ");
         String password = reader.readLine();
 
         User tmpUser = new User(username, password);

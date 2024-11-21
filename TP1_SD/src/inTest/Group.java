@@ -1,7 +1,9 @@
-package Classes;
+package inTest;
 
 import java.io.*;
 import java.util.*;
+
+import Classes.User;
 import Enums.Rank;
 
 public class Group {

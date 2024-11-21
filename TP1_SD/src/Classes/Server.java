@@ -8,6 +8,10 @@ public class Server {
     private final String USERS_FILE = "Users.txt";
     private final String MESSAGES_FILE = "Messages.txt";
 
+    private final String HIGH_MULTICAST_GROUP = "230.0.0.0";
+    private final String MEDIUM_MULTICAST_GROUP = "231.0.0.0";
+    private final String LOW_MULTICAST_GROUP = "232.0.0.0";
+
     private User[] users;
 
     private int port;
@@ -17,6 +21,7 @@ public class Server {
     }
 
     public void start() throws IOException {
+
         try {
             ServerSocket ss = new ServerSocket(port);
 

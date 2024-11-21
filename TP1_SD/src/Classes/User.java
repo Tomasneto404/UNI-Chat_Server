@@ -50,7 +50,7 @@ public class User {
         return this.op;
     }
 
-    protected String getName() {
+    public String getName() {
         return name;
     }
 

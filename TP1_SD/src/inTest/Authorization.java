@@ -1,5 +1,6 @@
-package Classes;
+package inTest;
 
+import Classes.User;
 import Enums.OperationType;
 import Enums.Rank;
 
