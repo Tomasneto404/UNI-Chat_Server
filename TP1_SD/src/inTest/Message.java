@@ -80,7 +80,13 @@ public class Message {
     @Override
     public String toString() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String senderName = (userSender != null) ? userSender.getName() : "Unknown";
+        String senderName;
+        
+        if (userSender != null) {
+            senderName = userSender.getName();
+        } else {
+            senderName = "Unknown";
+        }
         return "Message{id=" + messageId + ", message='" + message + "', sender=" + senderName + ", date="
                 + dateFormat.format(date) + "}";
     }

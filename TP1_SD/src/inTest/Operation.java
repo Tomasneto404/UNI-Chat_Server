@@ -40,7 +40,6 @@ public class Operation {
         return this.finalized;
     }
 
-    /*
     public void approve(User approver) throws Exception {
         validateApproval(approver);
         this.approver = approver;
@@ -57,7 +56,7 @@ public class Operation {
         this.finalized = true;
         this.finalizedAt = LocalDateTime.now();
         notifyOperation("REJECTED by " + approver.getName());
-    }*/
+    }
 
     private void validateApproval(User approver) throws Exception {
         if (this.finalized) {
@@ -74,17 +73,19 @@ public class Operation {
         }
     }
 
-    /*private void notifyOperation(String message) {
+    private void notifyOperation(String message) {
         System.out.println("Operation Notification: " + message);
 
         // Log the notification to a file
-        try {
-            logToFile("notifications.log", message);
-        } catch (IOException e) {
-            System.err.println("Error logging notification: " + e.getMessage());
-        }
+        /*
+         * try {
+         * logToFile("notifications.log", message);
+         * } catch (IOException e) {
+         * System.err.println("Error logging notification: " + e.getMessage());
+         * }
+         */
 
-    }*/
+    }
 
     public void writeToFile(String file) throws IOException {
         FileWriter fileWriter = new FileWriter(file, true);
