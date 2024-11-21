@@ -1,1 +1,2 @@
 0;tomas;wasd;NONE
+0;wasd;wasd;HIGH

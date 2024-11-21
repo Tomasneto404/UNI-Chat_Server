@@ -26,18 +26,17 @@ public class UserInterface {
 
         writer.println("\n--- Welcome to the CHAT ---");
 
-        boolean authenticated = false;
+        User authenticatedUser = null;
 
-        while (!authenticated) {
+        while (authenticatedUser == null) {
             try {
-                authenticated = displayAuthMenu(reader, writer);
+                authenticatedUser = displayAuthMenu(reader, writer);
             } catch (StopReadingException e) {
                 System.out.println(e.getMessage());
                 return;
             }
 
         }
-
 
         while (true) {
 
@@ -60,6 +59,7 @@ public class UserInterface {
                     break;
                 case "4":
                     writer.println("\nDisconnected!");
+                    System.out.println("User <" + authenticatedUser.getName() + "> logged out!");
                     return;
                 default:
                     writer.println("\nInvalid option!.");
@@ -67,7 +67,7 @@ public class UserInterface {
         }
     }
 
-    private boolean displayAuthMenu(BufferedReader reader, PrintWriter writer) throws IOException {
+    private User displayAuthMenu(BufferedReader reader, PrintWriter writer) throws IOException {
 
         while (true) {
 
@@ -86,17 +86,18 @@ public class UserInterface {
             switch (option) {
                 case "1":
                     registUser(reader, writer);
+                    break;
                 case "2":
                     return loginUser(reader, writer);
                 case "3":
                     writer.println("Disconnected!");
-                    throw new StopReadingException("User disconnected!");
+                    throw new StopReadingException("User disconnected while trying to log in.");
 
                 default:
                     writer.println("Invalid option!.");
             }
         }
-        return true;
+        return null;
     }
 
     private void registUser(BufferedReader reader, PrintWriter writer) throws IOException {
@@ -126,8 +127,6 @@ public class UserInterface {
                 rank = Rank.NONE;
         }
 
-
-
         writer.println("Enter Password: ");
         String password = reader.readLine();
 
@@ -138,7 +137,7 @@ public class UserInterface {
 
             User tmpUser = new User(username, rank, password);
 
-            if (!searchUser(tmpUser)) {
+            if (searchUser(tmpUser) == null) {
                 tmpUser.writeToFile(usersFile);
             } else {
                 writer.println("User already exists!");
@@ -152,7 +151,7 @@ public class UserInterface {
 
     }
 
-    private boolean loginUser(BufferedReader reader, PrintWriter writer) throws IOException {
+    private User loginUser(BufferedReader reader, PrintWriter writer) throws IOException {
 
         loadData();
 
@@ -163,15 +162,16 @@ public class UserInterface {
         String password = reader.readLine();
 
         User tmpUser = new User(username, password);
+        User userToLogin = searchUser(tmpUser);
 
-        if (searchUser(tmpUser)) {
+        if (userToLogin != null) {
             writer.println("Authenticated!");
-            System.out.println("User <" + tmpUser.getName() + "> logged in successfully!");
-            return true;
+            System.out.println("User <" + userToLogin.getName() + "> logged in!");
+            return userToLogin;
         }
 
         writer.println("User not found!");
-        return false;
+        return null;
     }
 
     private void loadData(){
@@ -199,17 +199,17 @@ public class UserInterface {
 
     }
 
-    public boolean searchUser(User userToSearch) {
+    public User searchUser(User userToSearch) {
 
         if (!users.isEmpty()){
             for (User user : users) {
                 if ( user.getName().equals(userToSearch.getName()) ) {
-                    return true;
+                    return user;
                 }
             }
         }
 
-        return false;
+        return null;
     }
 
 }
