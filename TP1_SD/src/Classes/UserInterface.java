@@ -43,7 +43,7 @@ public class UserInterface {
             writer.println("\n--- Menu ---");
             writer.println("1. Channels");
             writer.println("2. Notifications");
-            writer.println("4. Exit");
+            writer.println("3. Exit");
             writer.println("Option:");
 
             String option = reader.readLine();
@@ -57,7 +57,7 @@ public class UserInterface {
                     break;
                 case "2":
                     break;
-                case "4":
+                case "3":
                     writer.println("\nDisconnected!");
                     System.out.println("User <" + authenticatedUser.getName() + "> logged out!");
                     return;
