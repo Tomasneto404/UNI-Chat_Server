@@ -1,5 +1,0 @@
-package Enums;
-
-public enum OperationType {
-   EVACUATION, EMERGENCY_COMUNICATION, RESOURCES_DISTRIBUTION 
-}
