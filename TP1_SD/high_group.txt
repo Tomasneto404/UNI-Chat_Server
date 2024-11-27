@@ -12,3 +12,5 @@
 <24-11-2024 23:48:20>[Tomas] (HIGH): Teste às 13:48
 <24-11-2024 23:48:50>[Tomas] (HIGH): xit
 <25-11-2024 17:17:40>[Tomas] (HIGH): YTeste no github
+<27-11-2024 11:56:44>[Tania] (HIGH): Ola
+<27-11-2024 11:56:50>[Tomas] (HIGH): Arroz
