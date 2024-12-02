@@ -7,9 +7,9 @@ import java.time.format.DateTimeFormatter;
 
 public class Server {
 
-    private final String HIGH_GROUP_FILENAME = "high_group.txt";
-    private final String MEDIUM_GROUP_FILENAME = "medium_group.txt";
-    private final String LOW_GROUP_FILENAME = "low_group.txt";
+    private final String HIGH_GROUP_FILENAME = "SERVER_high_group.txt";
+    private final String MEDIUM_GROUP_FILENAME = "SERVER_medium_group.txt";
+    private final String LOW_GROUP_FILENAME = "SERVER_low_group.txt";
 
     private final String HIGH_MULTICAST_GROUP_ADDRESS = "230.0.0.0";
     private final int HIGH_MULTICAST_GROUP_PORT = 4445;
@@ -22,7 +22,7 @@ public class Server {
 
     private int serverPort;
 
-    public Server(int port) throws IOException {
+    public Server(int port) {
         this.serverPort = port;
     }
 
@@ -43,7 +43,7 @@ public class Server {
 
             while (true) {
                 Socket clientSocket = ss.accept();
-                Thread clientThread = new Thread(new ClientHandler(clientSocket));
+                Thread clientThread = new Thread(new ClientHandler(clientSocket, HIGH_GROUP_FILENAME, MEDIUM_GROUP_FILENAME, LOW_GROUP_FILENAME));
                 clientThread.start();
             }
 

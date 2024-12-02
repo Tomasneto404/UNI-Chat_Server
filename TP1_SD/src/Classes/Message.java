@@ -12,7 +12,7 @@ public class Message {
     private Date date;
 
     public Message(int id,String message) {
-        this.messageId=id;
+        this.messageId = id;
         this.message = message;
     }
 

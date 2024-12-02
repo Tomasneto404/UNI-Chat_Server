@@ -4,9 +4,7 @@ import Common.User;
 import Enums.Rank;
 import Exceptions.StopReadingException;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -47,6 +45,8 @@ public class UserInterface {
 
     public boolean start(Scanner scanner, BufferedReader reader, PrintWriter writer) throws IOException, StopReadingException {
         while (true) {
+            cleanBuffer(reader);
+
             System.out.println("\n--- Authentication ---");
             System.out.println("1. Register");
             System.out.println("2. Login");
@@ -71,6 +71,7 @@ public class UserInterface {
                 case "0":
                     writer.println("exit");
                     throw new StopReadingException("Disconnected from the server.");
+
                 default:
                     System.out.println("Invalid option.");
             }
@@ -84,7 +85,8 @@ public class UserInterface {
         while (true) {
             System.out.println("--- Menu ---");
             System.out.println("1. Channels");
-            System.out.println("2. Notifications");
+            System.out.println("2. Private Messages");
+            System.out.println("3. Notifications");
             System.out.println("0. Exit");
             System.out.print("Option: ");
 
@@ -92,7 +94,7 @@ public class UserInterface {
 
             switch (option) {
                 case "1":
-                    handleChannels(scanner, reader);
+                    handleChannels(scanner, reader, writer);
                     break;
 
                 case "2":
@@ -107,7 +109,7 @@ public class UserInterface {
         }
     }
 
-    private void handleChannels(Scanner scanner, BufferedReader reader) throws IOException {
+    private void handleChannels(Scanner scanner, BufferedReader reader, PrintWriter writer) throws IOException {
         String userRank = loggedUser.getRank().toString();
 
         showGroupOptions(userRank);
@@ -115,13 +117,13 @@ public class UserInterface {
         String option = scanner.nextLine();
 
         if (userRank.equals("HIGH")) {
-            handleHighGroup(option, scanner);
+            handleHighGroup(option, scanner, writer, reader);
 
         } else if (userRank.equals("MEDIUM")) {
-            handleMediumGroup(option, scanner);
+            handleMediumGroup(option, scanner, writer, reader);
 
         } else if (userRank.equals("LOW")) {
-            handleLowGroup(option, scanner);
+            handleLowGroup(option, scanner, writer, reader);
         }
     }
 
@@ -145,16 +147,16 @@ public class UserInterface {
         System.out.print("Option: ");
     }
 
-    private void handleHighGroup(String option, Scanner scanner) throws IOException {
+    private void handleHighGroup(String option, Scanner scanner, PrintWriter writer, BufferedReader reader) throws IOException {
         switch (option) {
             case "1":
-                joinGroup("HIGH", HIGH_MULTICAST_GROUP_PORT, highGroup, scanner);
+                joinGroup("HIGH", HIGH_MULTICAST_GROUP_PORT, highGroup, scanner, writer, reader);
                 break;
             case "2":
-                joinGroup("MEDIUM", MEDIUM_MULTICAST_GROUP_PORT, mediumGroup, scanner);
+                joinGroup("MEDIUM", MEDIUM_MULTICAST_GROUP_PORT, mediumGroup, scanner, writer, reader);
                 break;
             case "3":
-                joinGroup("LOW", LOW_MULTICAST_GROUP_PORT, lowGroup, scanner);
+                joinGroup("LOW", LOW_MULTICAST_GROUP_PORT, lowGroup, scanner, writer, reader);
                 break;
             case "0":
                 break;
@@ -163,13 +165,13 @@ public class UserInterface {
         }
     }
 
-    private void handleMediumGroup(String option, Scanner scanner) throws IOException {
+    private void handleMediumGroup(String option, Scanner scanner, PrintWriter writer, BufferedReader reader) throws IOException {
         switch (option) {
             case "1":
-                joinGroup("MEDIUM", MEDIUM_MULTICAST_GROUP_PORT, mediumGroup, scanner);
+                joinGroup("MEDIUM", MEDIUM_MULTICAST_GROUP_PORT, mediumGroup, scanner, writer, reader);
                 break;
             case "2":
-                joinGroup("LOW", LOW_MULTICAST_GROUP_PORT, lowGroup, scanner);
+                joinGroup("LOW", LOW_MULTICAST_GROUP_PORT, lowGroup, scanner, writer, reader);
                 break;
             case "0":
                 break;
@@ -178,10 +180,10 @@ public class UserInterface {
         }
     }
 
-    private void handleLowGroup(String option, Scanner scanner) throws IOException {
+    private void handleLowGroup(String option, Scanner scanner, PrintWriter writer, BufferedReader reader) throws IOException {
         switch (option) {
             case "1":
-                joinGroup("LOW", LOW_MULTICAST_GROUP_PORT, lowGroup, scanner);
+                joinGroup("LOW", LOW_MULTICAST_GROUP_PORT, lowGroup, scanner, writer, reader);
                 break;
             case "0":
                 break;
@@ -190,14 +192,24 @@ public class UserInterface {
         }
     }
 
-    private void joinGroup(String groupName, int port, InetAddress group, Scanner scanner) throws IOException {
+    private void joinGroup(String groupName, int port, InetAddress group, Scanner scanner, PrintWriter writer, BufferedReader reader) throws IOException {
         MulticastSocket multicastSocket = new MulticastSocket(port);
+
         try {
             multicastSocket.joinGroup(group);
             System.out.println("+ " + groupName.toUpperCase() + " GROUP +");
 
+            //Receber historico de mensagens
+            getMessagesFromServer(groupName, writer, reader);
+
             // Thread para receber mensagens
-            Thread receiveThread = new Thread(() -> receiveMessages(multicastSocket));
+            Thread receiveThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    receiveMessages(multicastSocket);
+                }
+            });
+
             receiveThread.start();
 
             // Enviar mensagens
@@ -290,7 +302,6 @@ public class UserInterface {
         //Get Message
         String serverResponse = reader.readLine();
         System.out.println(serverResponse);
-
     }
 
     private User loadUser(String userDataCSV) {
@@ -308,4 +319,26 @@ public class UserInterface {
 
         return null;
     }
+
+    private void cleanBuffer(BufferedReader reader) throws IOException {
+        while (reader.ready()) {
+            reader.readLine();
+        }
+    }
+
+    private void getMessagesFromServer(String groupName, PrintWriter writer, BufferedReader reader) {
+        writer.println("messagesFromGroup:" + groupName);
+        String line;
+        try {
+            while ((line = reader.readLine()) != null) {
+                if ("END_OF_MESSAGES".equals(line)) {
+                    break;
+                }
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

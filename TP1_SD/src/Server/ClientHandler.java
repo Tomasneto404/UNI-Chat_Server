@@ -13,6 +13,10 @@ import java.util.List;
  */
 public class ClientHandler implements Runnable {
 
+    private final String highGroupMessagesFile;
+    private final String mediumGroupMessagesFile;
+    private final String lowGroupMessagesFile;
+
     private final String USERS_FILE = "Users.csv";
 
     private final Socket clientSocket;
@@ -21,9 +25,12 @@ public class ClientHandler implements Runnable {
 
     private User loggedUser;
 
-    public ClientHandler(Socket clientSocket) {
+    public ClientHandler(Socket clientSocket, String high_group_file, String medium_group_file, String low_group_file) {
         this.clientSocket = clientSocket;
         this.users = new ArrayList<>();
+        this.highGroupMessagesFile = high_group_file;
+        this.mediumGroupMessagesFile = medium_group_file;
+        this.lowGroupMessagesFile = low_group_file;
     }
 
     @Override
@@ -46,6 +53,7 @@ public class ClientHandler implements Runnable {
                 switch (input) {
 
                     case "regist":
+                        loadUsersFromFile();
                         System.out.println("Regist user process started...");
 
                         User newUser = registUser(reader, writer);
@@ -61,6 +69,7 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case "login":
+                        loadUsersFromFile();
                         System.out.println("Login user process started...");
                         loggedUser = loginUser(reader, writer);
 
@@ -71,18 +80,36 @@ public class ClientHandler implements Runnable {
 
                         } else {
                             writer.println("Login failed. Returning ...");
-                            writer.println("None");
+                            writer.println("None"); //Envia os dados do User como None
                             System.out.println("Client from " + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort() + " failed to login!");
                         }
                         break;
 
                     case "exit":
-                        System.out.println("Client from " + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort() + " disconnected!");
+                        loadUsersFromFile();
+                        if (loggedUser != null) {
+                            System.out.println("User <" + loggedUser.getName() + "> disconnected!");
+                        } else {
+                            System.out.println("Client from " + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort() + " disconnected!");
+                        }
                         writer.println("Disconnected!");
                         clientSocket.close();
                         return;
 
+                    case "messagesFromGroup:HIGH":
+                        loadUsersFromFile();
+                        sendGroupMessages(highGroupMessagesFile, writer);
+
+                    case "messagesFromGroup:MEDIUM":
+                        loadUsersFromFile();
+                        sendGroupMessages(mediumGroupMessagesFile, writer);
+
+                    case "messagesFromGroup:LOW":
+                        loadUsersFromFile();
+                        sendGroupMessages(lowGroupMessagesFile, writer);
+
                     default:
+                        loadUsersFromFile();
                         writer.println("Invalid command!");
                 }
             }
@@ -149,15 +176,13 @@ public class ClientHandler implements Runnable {
     }
 
     public User searchUser(User userToSearch) {
-
-        if (!users.isEmpty()){
+        if (!users.isEmpty()) {
             for (User user : users) {
-                if ( user.getName().equals(userToSearch.getName()) ) {
+                if (user.getName().equals(userToSearch.getName()) && user.getPassword().equals(userToSearch.getPassword())) {
                     return user;
                 }
             }
         }
-
         return null;
     }
 
@@ -185,6 +210,20 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    private void sendGroupMessages(String filePath, PrintWriter writer) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                writer.println(line);
+            }
 
+            writer.println("END_OF_MESSAGES");
+
+            writer.flush();
+            System.out.println("Process finished.");
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
+    }
 
 }

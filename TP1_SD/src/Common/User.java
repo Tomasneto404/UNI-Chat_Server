@@ -54,7 +54,7 @@ public class User {
         return name;
     }
 
-    protected String getPassword() {
+    public String getPassword() {
         return password;
     }
 
