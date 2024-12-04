@@ -13,6 +13,7 @@ public class User {
     private Rank rank;
     private String password;
     private OperationType op;
+    private boolean status;
 
     // preciso disto tomás, não apagues
     public User(int id, String name, Rank rank) {
@@ -25,6 +26,7 @@ public class User {
         this.name = name;
         this.rank = rank;
         this.password = password;
+        this.status = false;
     }
 
     // É preciso alterar
@@ -40,6 +42,18 @@ public class User {
         this.name = name;
         this.password = password;
         this.rank = rank;
+    }
+
+    public User(int id, String name, String password, Rank rank, Boolean status) {
+        this.id = id;
+        this.name = name;
+        this.password = password;
+        this.rank = rank;
+        this.status = status;
+    }
+
+    public User(String name) {
+        this.name = name;
     }
 
     public void setOperation(OperationType op) {
@@ -63,7 +77,7 @@ public class User {
     }
 
     public String toCSV(String chr) {
-        return this.id + chr + this.name + chr + this.password + chr + this.rank + "\n";
+        return this.id + chr + this.name + chr + this.password + chr + this.rank + chr + this.status + "\n";
     }
 
     public void writeToFile(String file) throws IOException {
@@ -74,4 +88,11 @@ public class User {
 
     }
 
+    public boolean isOnline() {
+        return status;
+    }
+
+    public void setStatus(boolean status) {
+        this.status = status;
+    }
 }

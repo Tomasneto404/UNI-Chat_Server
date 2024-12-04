@@ -4,12 +4,16 @@ import java.io.*;
 import java.net.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Server {
 
     private final String HIGH_GROUP_FILENAME = "SERVER_high_group.txt";
     private final String MEDIUM_GROUP_FILENAME = "SERVER_medium_group.txt";
     private final String LOW_GROUP_FILENAME = "SERVER_low_group.txt";
+
+    private final String USERS_FILE = "Users.csv";
 
     private final String HIGH_MULTICAST_GROUP_ADDRESS = "230.0.0.0";
     private final int HIGH_MULTICAST_GROUP_PORT = 4445;
@@ -33,6 +37,7 @@ public class Server {
         InetAddress lowGroupAddress = InetAddress.getByName(LOW_MULTICAST_GROUP_ADDRESS);
 
         try {
+            resetUsersStatus(); //Alterar os estados dos utilizadores para offline
             ServerSocket ss = new ServerSocket(serverPort);
 
             System.out.println("Server connected on port: " + serverPort);
@@ -43,7 +48,7 @@ public class Server {
 
             while (true) {
                 Socket clientSocket = ss.accept();
-                Thread clientThread = new Thread(new ClientHandler(clientSocket, HIGH_GROUP_FILENAME, MEDIUM_GROUP_FILENAME, LOW_GROUP_FILENAME));
+                Thread clientThread = new Thread(new ClientHandler(clientSocket, USERS_FILE, HIGH_GROUP_FILENAME, MEDIUM_GROUP_FILENAME, LOW_GROUP_FILENAME));
                 clientThread.start();
             }
 
@@ -84,7 +89,8 @@ public class Server {
                 DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
                 String formattedDate = myDateObj.format(myFormatObj);
 
-                String fullMessage = "<" + formattedDate + ">" + receivedMessage + "\n";
+                //String fullMessage = "<" + formattedDate + ">" + receivedMessage + "\n";
+                String fullMessage = receivedMessage + "\n";
                 saveMessageToFile(fullMessage, fileName);
             }
         } catch (IOException e) {
@@ -98,6 +104,29 @@ public class Server {
         fileWriter.close();
     }
 
+    private void resetUsersStatus() throws IOException {
+        List<String> updatedLines = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(USERS_FILE))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] fields = line.split(";");
+                if (fields.length > 0) {
+                    fields[fields.length - 1] = "false";
+
+                    String updatedLine = String.join(";", fields);
+                    updatedLines.add(updatedLine);
+                }
+            }
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(USERS_FILE))) {
+            for (String updatedLine : updatedLines) {
+                writer.write(updatedLine);
+                writer.newLine();
+            }
+        }
+    }
 
     public static void main(String[] args) {
 
@@ -109,4 +138,6 @@ public class Server {
         }
 
     }
+
+
 }

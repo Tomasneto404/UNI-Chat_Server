@@ -1,9 +1,17 @@
 package Server;
 
+import Common.Operation;
 import Common.User;
+import Enums.OperationStatus;
+import Enums.OperationType;
 import Enums.Rank;
+import Exceptions.InvalidUserException;
+import Exceptions.RejectedOperationException;
 
 import java.io.*;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,32 +25,49 @@ public class ClientHandler implements Runnable {
     private final String mediumGroupMessagesFile;
     private final String lowGroupMessagesFile;
 
-    private final String USERS_FILE = "Users.csv";
+    private final String HIGH_MULTICAST_GROUP_ADDRESS = "230.0.0.0";
+    private final int HIGH_MULTICAST_GROUP_PORT = 4445;
+
+    private final String MEDIUM_MULTICAST_GROUP_ADDRESS = "231.0.0.0";
+    private final int MEDIUM_MULTICAST_GROUP_PORT = 4446;
+
+    private final String LOW_MULTICAST_GROUP_ADDRESS = "232.0.0.0";
+    private final int LOW_MULTICAST_GROUP_PORT = 4447;
 
     private final Socket clientSocket;
 
+    private String usersFile;
+    private String operationsFile = "operations.csv";
+
     private List<User> users;
+    private List<Operation> operations;
 
     private User loggedUser;
 
-    public ClientHandler(Socket clientSocket, String high_group_file, String medium_group_file, String low_group_file) {
+
+    public ClientHandler(Socket clientSocket, String usersFile, String highGroupFile, String mediumGroupFile, String lowGroupFile) {
         this.clientSocket = clientSocket;
         this.users = new ArrayList<>();
-        this.highGroupMessagesFile = high_group_file;
-        this.mediumGroupMessagesFile = medium_group_file;
-        this.lowGroupMessagesFile = low_group_file;
+        this.operations = new ArrayList<>();
+        this.usersFile = usersFile;
+        this.highGroupMessagesFile = highGroupFile;
+        this.mediumGroupMessagesFile = mediumGroupFile;
+        this.lowGroupMessagesFile = lowGroupFile;
     }
 
     @Override
     public synchronized void run() {
+
         try {
-            loadUsersFromFile();
+
             PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true);
             BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
             System.out.println("Client from " + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort() + " connected!");
 
             while (true) {
+                loadUsersFromFile();
+                loadOperationsFromFile();
                 String input = reader.readLine();
 
                 if (input == null) {
@@ -74,6 +99,15 @@ public class ClientHandler implements Runnable {
                         loggedUser = loginUser(reader, writer);
 
                         if (loggedUser != null) {
+
+                            if (loggedUser.isOnline()) {
+                                writer.println("This user is already logged in.");
+                                loggedUser = null;
+                                break;
+                            }
+
+                            updateUserStatus(loggedUser, true);
+
                             writer.println("Login completed successfully!");
                             writer.println(loggedUser.toCSV(";")); //Envia dados do User para o client
                             System.out.println("User <" + loggedUser.getName() + "> has been logged in!");
@@ -88,6 +122,7 @@ public class ClientHandler implements Runnable {
                     case "exit":
                         loadUsersFromFile();
                         if (loggedUser != null) {
+                            updateUserStatus(loggedUser, false);
                             System.out.println("User <" + loggedUser.getName() + "> disconnected!");
                         } else {
                             System.out.println("Client from " + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort() + " disconnected!");
@@ -99,18 +134,50 @@ public class ClientHandler implements Runnable {
                     case "messagesFromGroup:HIGH":
                         loadUsersFromFile();
                         sendGroupMessages(highGroupMessagesFile, writer);
+                        cleanBuffer(reader);
+                        break;
 
                     case "messagesFromGroup:MEDIUM":
                         loadUsersFromFile();
                         sendGroupMessages(mediumGroupMessagesFile, writer);
+                        cleanBuffer(reader);
+                        break;
 
                     case "messagesFromGroup:LOW":
                         loadUsersFromFile();
                         sendGroupMessages(lowGroupMessagesFile, writer);
+                        cleanBuffer(reader);
+                        break;
+
+                    case "opEvac":
+                        loadOperationsFromFile();
+                        handleEvacOperation(reader);
+                        cleanBuffer(reader);
+                        break;
+
+                    case "opEmergency":
+                        loadOperationsFromFile();
+                        handleEmergencyOperation(reader);
+                        cleanBuffer(reader);
+                        break;
+
+                    case "opResources":
+                        loadOperationsFromFile();
+                        handleResourceDistributionOperation(reader);
+                        cleanBuffer(reader);
+                        break;
+
+                    case "approve":
+                        loadOperationsFromFile();
+                        handleApproveRequest(reader, writer);
+                        cleanBuffer(reader);
+                        break;
 
                     default:
                         loadUsersFromFile();
                         writer.println("Invalid command!");
+                        cleanBuffer(reader);
+                        break;
                 }
             }
 
@@ -166,7 +233,7 @@ public class ClientHandler implements Runnable {
         User tmpUser = new User(username, rank, password);
 
         if (searchUser(tmpUser) == null) {
-            tmpUser.writeToFile(USERS_FILE);
+            tmpUser.writeToFile(usersFile);
             return tmpUser;
         } else {
             writer.println("User already exists! Registration failed.");
@@ -189,12 +256,12 @@ public class ClientHandler implements Runnable {
     private void loadUsersFromFile() {
         try {
 
-            BufferedReader br = new BufferedReader(new FileReader(USERS_FILE));
+            BufferedReader br = new BufferedReader(new FileReader(usersFile));
 
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(";");
-                if (parts.length == 4) {
+                if (parts.length == 5) {
 
                     int id = Integer.parseInt(parts[0]);
                     String name = parts[1];
@@ -202,7 +269,9 @@ public class ClientHandler implements Runnable {
 
                     Rank rank = Rank.valueOf(parts[3]);
 
-                    users.add(new User(id, name, password, rank));
+                    Boolean status = Boolean.parseBoolean(parts[4]);
+
+                    users.add(new User(id, name, password, rank, status));
                 }
             }
         } catch (IOException e) {
@@ -220,9 +289,280 @@ public class ClientHandler implements Runnable {
             writer.println("END_OF_MESSAGES");
 
             writer.flush();
-            System.out.println("Process finished.");
         } catch (IOException e) {
             System.err.println("Error reading file: " + e.getMessage());
+        }
+    }
+
+    private void updateUserStatus(User user, Boolean status) throws IOException {
+        List<String> updatedLines = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(usersFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] fields = line.split(";");
+
+                if (fields.length > 1 && fields[1].equals(user.getName())) {
+                    fields[fields.length - 1] = status.toString();
+                }
+                updatedLines.add(String.join(";", fields));
+            }
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(usersFile))) {
+            for (String updatedLine : updatedLines) {
+                writer.write(updatedLine);
+                writer.newLine();
+            }
+        }
+    }
+
+    private void handleEvacOperation(BufferedReader reader) {
+        try {
+            InetAddress highGroupAddress = InetAddress.getByName(HIGH_MULTICAST_GROUP_ADDRESS);
+
+            String opMsg = reader.readLine();
+
+            Operation op = new Operation(OperationType.EVACUATION, loggedUser, opMsg);
+            op.writeToFile(operationsFile);
+
+            sendApproveOperationRequest(op, highGroupAddress, HIGH_MULTICAST_GROUP_PORT);
+
+        } catch (IOException e) {
+            System.err.println("Error reading message: " + e.getMessage());
+        }
+    }
+
+    private void handleEmergencyOperation(BufferedReader reader) {
+        try {
+            InetAddress highGroupAddress = InetAddress.getByName(HIGH_MULTICAST_GROUP_ADDRESS);
+            InetAddress mediumGroupAddress = InetAddress.getByName(MEDIUM_MULTICAST_GROUP_ADDRESS);
+
+            String opMsg = reader.readLine();
+
+            Operation op = new Operation(OperationType.EMERGENCY_COMUNICATION, loggedUser, opMsg);
+            op.writeToFile(operationsFile);
+
+            sendApproveOperationRequest(op, highGroupAddress, HIGH_MULTICAST_GROUP_PORT);
+            sendApproveOperationRequest(op, mediumGroupAddress, MEDIUM_MULTICAST_GROUP_PORT);
+
+        } catch (IOException e) {
+            System.err.println("Error reading message: " + e.getMessage());
+        }
+    }
+
+    private void handleResourceDistributionOperation(BufferedReader reader) {
+        try {
+            InetAddress highGroupAddress = InetAddress.getByName(HIGH_MULTICAST_GROUP_ADDRESS);
+            InetAddress mediumGroupAddress = InetAddress.getByName(MEDIUM_MULTICAST_GROUP_ADDRESS);
+            InetAddress lowGroupAddress = InetAddress.getByName(LOW_MULTICAST_GROUP_ADDRESS);
+
+            String opMsg = reader.readLine();
+
+            Operation op = new Operation(OperationType.RESOURCES_DISTRIBUTION, loggedUser, opMsg);
+            op.writeToFile(operationsFile);
+
+            sendApproveOperationRequest(op, highGroupAddress, HIGH_MULTICAST_GROUP_PORT);
+            sendApproveOperationRequest(op, mediumGroupAddress, MEDIUM_MULTICAST_GROUP_PORT);
+            sendApproveOperationRequest(op, lowGroupAddress, LOW_MULTICAST_GROUP_PORT);
+
+        } catch (IOException e) {
+            System.err.println("Error reading message: " + e.getMessage());
+        }
+    }
+
+    private void sendApproveOperationRequest(Operation operation, InetAddress group, int port) throws IOException {
+        MulticastSocket multicastSocket = new MulticastSocket(port);
+        multicastSocket.joinGroup(group);
+
+        byte[] buffer = operation.getApprovalRequestMessage().getBytes();
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, port);
+        multicastSocket.send(packet);
+    }
+
+    /**
+     * Aprovar Operações
+     *
+     * @param reader
+     * @param writer
+     */
+    private void handleApproveRequest(BufferedReader reader, PrintWriter writer) {
+        try {
+            String opCode = reader.readLine();
+
+            int operationId;
+            try {
+                operationId = Integer.parseInt(opCode);
+            } catch (NumberFormatException e) {
+                writer.println("Invalid operation code. Please provide a valid number.");
+                return;
+            }
+
+            Operation op = searchOperationById(operationId);
+
+            if (op == null) {
+                writer.println("Operation not found.");
+                return;
+            }
+
+            if (op.getStatus().equals(OperationStatus.APPROVED)) {
+                writer.println("Operation already approved.");
+                return;
+            }
+
+            if (op.getLocutor().getName().equals(loggedUser.getName())) {
+                writer.println("You can't approve your own operation!");
+                return;
+            }
+
+            try {
+                op.approve(loggedUser, true);
+                InitOperation(op);
+                updateOperationsInFile(op);
+                writer.println("Operation approved and started!");
+            } catch (InvalidUserException e) {
+                writer.println("User without permission to approve.");
+            } catch (IllegalArgumentException e) {
+                writer.println("User can't be null.");
+            }
+
+        } catch (IOException e) {
+            System.err.println("Error reading code: " + e.getMessage());
+        }
+    }
+
+    private void updateOperationsInFile(Operation operation) {
+        List<String> fileContent = new ArrayList<>();
+        boolean updated = false;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(operationsFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(";");
+                int currentOperationId = Integer.parseInt(parts[0]);
+
+                if (currentOperationId == operation.getId()) {
+                    line = operation.toCSV(";");
+                    updated = true;
+                }
+
+                fileContent.add(line);
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
+
+        if (updated) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(operationsFile))) {
+                for (String line : fileContent) {
+                    writer.write(line);
+                }
+            } catch (IOException e) {
+                System.err.println("Error writing in file: " + e.getMessage());
+            }
+        }
+
+    }
+
+    private void InitOperation(Operation op) {
+        try {
+            InetAddress highGroupAddress = InetAddress.getByName(HIGH_MULTICAST_GROUP_ADDRESS);
+            InetAddress mediumGroupAddress = InetAddress.getByName(MEDIUM_MULTICAST_GROUP_ADDRESS);
+            InetAddress lowGroupAddress = InetAddress.getByName(LOW_MULTICAST_GROUP_ADDRESS);
+
+            if (op.getStatus() == OperationStatus.APPROVED) {
+
+                sendOperationMsg(op, highGroupAddress, HIGH_MULTICAST_GROUP_PORT);
+                sendOperationMsg(op, mediumGroupAddress, MEDIUM_MULTICAST_GROUP_PORT);
+                sendOperationMsg(op, lowGroupAddress, LOW_MULTICAST_GROUP_PORT);
+
+            } else if (op.getStatus() == OperationStatus.REJECTED) {
+
+                throw new RejectedOperationException("Operation was rejected.");
+
+            }
+
+        } catch (IOException e) {
+            System.err.println("Error accessing Multicast Channels: " + e.getMessage());
+        }
+    }
+
+    private void sendOperationMsg(Operation operation, InetAddress group, int port) throws IOException {
+        MulticastSocket multicastSocket = new MulticastSocket(port);
+        multicastSocket.joinGroup(group);
+
+        byte[] buffer = operation.getOperationServerMessage().getBytes();
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, port);
+        multicastSocket.send(packet);
+    }
+
+    private Operation searchOperationById(int id) {
+        for (Operation operation : operations) {
+            if (operation.getId() == id) {
+                return operation;
+            }
+        }
+        return null;
+    }
+
+    private void loadOperationsFromFile() {
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(operationsFile));
+
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(";");
+
+                if (parts.length == 7) {
+
+                    int id = Integer.parseInt(parts[0]);
+                    String sender = parts[1];
+                    OperationType opType = OperationType.valueOf(parts[2]);
+                    String opMsg = parts[3];
+                    OperationStatus opStatus = OperationStatus.valueOf(parts[4]);
+                    String dateRequested = parts[5];
+                    String dateResponded = parts[6];
+                    User user = findUser(new User(sender));
+
+                    operations.add(new Operation(id, user, opType, opMsg, opStatus, dateRequested, dateResponded));
+
+
+                } else if (parts.length == 8) {
+
+                    int id = Integer.parseInt(parts[0]);
+                    String sender = parts[1];
+                    String approver = parts[2];
+                    OperationType opType = OperationType.valueOf(parts[3]);
+                    String opMsg = parts[4];
+                    OperationStatus opStatus = OperationStatus.valueOf(parts[5]);
+                    String dateRequested = parts[6];
+                    String dateResponded = parts[7];
+
+                    User locutor = findUser(new User(sender));
+                    User interlocutor = findUser(new User(approver));
+
+                    operations.add(new Operation(id, locutor, interlocutor, opType, opMsg, opStatus, dateRequested, dateResponded));
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading users: " + e.getMessage());
+        }
+    }
+
+    public User findUser(User userToFind) {
+        if (!users.isEmpty()) {
+            for (User user : users) {
+                if (user.getName().equals(userToFind.getName())) {
+                    return user;
+                }
+            }
+        }
+        return null;
+    }
+
+    private void cleanBuffer(BufferedReader reader) throws IOException {
+        while (reader.ready()) {
+            reader.readLine();
         }
     }
 

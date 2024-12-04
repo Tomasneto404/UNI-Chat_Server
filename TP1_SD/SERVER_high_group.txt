@@ -1,10 +1,106 @@
-<02-12-2024 22:34:35>[Tomas] (HIGH): Sou fixe
-<02-12-2024 22:34:51>[Tomas] (HIGH): Esta a funfar
-<02-12-2024 22:35:15>[Tomas] (HIGH): wasd
-<02-12-2024 22:35:51>[Tomas] (HIGH): 
-<02-12-2024 22:35:51>[Tomas] (HIGH): 
-<02-12-2024 22:36:12>[Tomas] (HIGH): 
-<02-12-2024 22:36:19>[Tomas] (HIGH): esta tudo fudido
-<02-12-2024 22:40:28>[Tomas] (HIGH): wasd
-<02-12-2024 22:40:42>[Tomas] (HIGH): Isto é um chat
-<02-12-2024 22:41:04>[Tania] (HIGH): Pois claro que é
+
+-OPERATION REQUEST- RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:20:09
+Sender: mico (LOW)
+Code: 1
+Message: Teste
+
+
+*SERVER MESSAGE* -> EXECUTE OPERATION - RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:20:09
+Sender: mico (LOW)
+Accepted By: Tomas (HIGH)
+Message: Teste
+
+
+-OPERATION REQUEST- RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:21:54
+Sender: kiko (LOW)
+Code: 2
+Message: 123
+
+
+*SERVER MESSAGE* -> EXECUTE OPERATION - RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:20:09
+Sender: mico (LOW)
+Accepted By: kiko (LOW)
+Message: Teste
+
+
+*SERVER MESSAGE* -> EXECUTE OPERATION - RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:20:09
+Sender: mico (LOW)
+Accepted By: Tomas (HIGH)
+Message: Teste
+
+
+-OPERATION REQUEST- RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:26:25
+Sender: mico (LOW)
+Code: 1
+Message: wasd
+
+
+*SERVER MESSAGE* -> EXECUTE OPERATION - RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:26:25
+Sender: mico (LOW)
+Accepted By: Tomas (HIGH)
+Message: wasd
+
+
+*SERVER MESSAGE* -> EXECUTE OPERATION - RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:26:25
+Sender: mico (LOW)
+Accepted By: kiko (LOW)
+Message: wasd
+
+
+*SERVER MESSAGE* -> EXECUTE OPERATION - RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:26:25
+Sender: mico (LOW)
+Accepted By: Tomas (HIGH)
+Message: wasd
+
+
+-OPERATION REQUEST- RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:40:21
+Sender: mico (LOW)
+Code: 2
+Message: distribuir coisas
+
+
+-OPERATION REQUEST- RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:43:00
+Sender: mico (LOW)
+Code: 1
+Message: wadadadaa
+
+
+*SERVER MESSAGE* -> EXECUTE OPERATION - RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:43:00
+Sender: mico (LOW)
+Accepted By: Tomas (HIGH)
+Message: wadadadaa
+
+
+-OPERATION REQUEST- RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:43:47
+Sender: kiko (LOW)
+Code: 2
+Message: 123
+
+[Tomas] (HIGH): wasd
+
+-OPERATION REQUEST- EMERGENCY_COMUNICATION
+Date: 04-12-2024 00:49:19
+Sender: Tomas (HIGH)
+Code: 3
+Message: qwerty
+
+
+-OPERATION REQUEST- RESOURCES_DISTRIBUTION
+Date: 04-12-2024 00:49:52
+Sender: Tomas (HIGH)
+Code: 4
+Message: 123
+

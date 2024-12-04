@@ -16,8 +16,6 @@ public class Client {
 
     public Client(int serverPort) throws IOException {
         this.serverPort = serverPort;
-
-
     }
 
     public void start() throws IOException {

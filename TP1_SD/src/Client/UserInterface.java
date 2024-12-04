@@ -1,7 +1,9 @@
 package Client;
 
 import Common.User;
+import Enums.OperationType;
 import Enums.Rank;
+import Exceptions.InvalidOperationFormatException;
 import Exceptions.StopReadingException;
 
 import java.io.*;
@@ -46,7 +48,6 @@ public class UserInterface {
     public boolean start(Scanner scanner, BufferedReader reader, PrintWriter writer) throws IOException, StopReadingException {
         while (true) {
             cleanBuffer(reader);
-
             System.out.println("\n--- Authentication ---");
             System.out.println("1. Register");
             System.out.println("2. Login");
@@ -83,6 +84,7 @@ public class UserInterface {
         System.out.println("--- Welcome to the CHAT <" + loggedUser.getName() + "> ---");
 
         while (true) {
+            cleanBuffer(reader);
             System.out.println("--- Menu ---");
             System.out.println("1. Channels");
             System.out.println("2. Private Messages");
@@ -201,6 +203,7 @@ public class UserInterface {
 
             //Receber historico de mensagens
             getMessagesFromServer(groupName, writer, reader);
+            cleanBuffer(reader);
 
             // Thread para receber mensagens
             Thread receiveThread = new Thread(new Runnable() {
@@ -216,16 +219,80 @@ public class UserInterface {
             while (true) {
                 String message = scanner.nextLine();
                 if ("exit".equalsIgnoreCase(message)) {
+
                     System.out.println("Leaving chat...");
                     break;
+
+                } else if (message.startsWith("/op_evac:")) {
+
+                    if (loggedUser.getRank().equals(Rank.HIGH)) {
+
+                        System.out.println("\n<Operation request started>\n");
+                        String newMessage = messageExtractor("/op_evac:", message);
+                        startOperation(writer, newMessage, OperationType.EVACUATION);
+
+                    } else {
+                        System.out.println("\n<No permissions for this operation>\n");
+                    }
+
+                } else if (message.startsWith("/op_ec:")) {
+
+                    if (loggedUser.getRank().equals(Rank.HIGH) || loggedUser.getRank().equals(Rank.MEDIUM)) {
+                        System.out.println("\n<Operation request started>\n");
+                        String newMessage = messageExtractor("/op_ec:", message);
+                        startOperation(writer, newMessage, OperationType.EMERGENCY_COMUNICATION);
+                    } else {
+                        System.out.println("\n<No permissions for this operation>\n");
+                    }
+
+                } else if (message.startsWith("/op_rd:")) {
+
+                    System.out.println("\n<Operation request started>\n");
+                    String newMessage = messageExtractor("/op_rd:", message);
+                    startOperation(writer, newMessage, OperationType.RESOURCES_DISTRIBUTION);
+
+                } else if (message.startsWith("/approve:")) {
+
+                    int code = Integer.valueOf(messageExtractor("/approve:", message));
+                    approveOperation(writer, code);
+                    System.out.println(reader.readLine()); //Notificação do servidor
+
+                } else {
+                    sendMessage(multicastSocket, message, group, port);
                 }
-                sendMessage(multicastSocket, message, group, port);
             }
 
             multicastSocket.leaveGroup(group);
         } finally {
             multicastSocket.close();
         }
+    }
+
+    private void approveOperation(PrintWriter writer, int code) {
+        writer.println("approve");
+        writer.println(code);
+    }
+
+    private void startOperation(PrintWriter writer, String msg, OperationType opType) {
+
+        String code = "";
+
+        switch (opType) {
+            case OperationType.EVACUATION -> code = "opEvac";
+            case OperationType.EMERGENCY_COMUNICATION -> code = "opEmergency";
+            case OperationType.RESOURCES_DISTRIBUTION -> code = "opResources";
+        }
+
+        writer.println(code);
+        writer.println(msg);
+    }
+
+    private String messageExtractor(String prefix, String message) {
+        if (message.contains(prefix)) {
+            int startIndex = message.indexOf(prefix) + prefix.length();
+            return message.substring(startIndex).trim();
+        }
+        throw new InvalidOperationFormatException("Invalid format: " + prefix);
     }
 
     private void receiveMessages(MulticastSocket multicastSocket) {
@@ -307,14 +374,15 @@ public class UserInterface {
     private User loadUser(String userDataCSV) {
 
         String[] parts = userDataCSV.split(";");
-        if (parts.length == 4) {
+        if (parts.length == 5) {
 
             int id = Integer.parseInt(parts[0]);
             String name = parts[1];
             String password = parts[2];
             Rank rank = Rank.valueOf(parts[3]);
+            Boolean status = Boolean.parseBoolean(parts[4]);
 
-            return new User(id, name, password, rank);
+            return new User(id, name, password, rank, status);
         }
 
         return null;
