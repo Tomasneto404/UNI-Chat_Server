@@ -12,6 +12,12 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Scanner;
 
+/**
+ * Classe responsável por gerir a interface do utilizador e comunicar com o
+ * servidor e grupos multicast.
+ * Fornece métodos para autenticação, navegação no menu principal e interação
+ * com grupos de chat.
+ */
 public class UserInterface {
 
     private final String HIGH_MULTICAST_GROUP_ADDRESS = "230.0.0.0";
@@ -33,6 +39,9 @@ public class UserInterface {
 
     private User loggedUser;
 
+    /**
+     * Construtor da classe. Inicializa os grupos multicast.
+     */
     public UserInterface() {
         try {
             this.highGroup = InetAddress.getByName(HIGH_MULTICAST_GROUP_ADDRESS);
@@ -44,8 +53,18 @@ public class UserInterface {
         }
     }
 
-
-    public boolean start(Scanner scanner, BufferedReader reader, PrintWriter writer) throws IOException, StopReadingException {
+    /**
+     * Inicia o processo de autenticação e navegação na interface.
+     * 
+     * @param scanner Entrada do utilizador.
+     * @param reader  Leitura de mensagens do servidor.
+     * @param writer  Escrita de mensagens para o servidor.
+     * @return Verdadeiro se o processo iniciar corretamente.
+     * @throws IOException          Em caso de erros de comunicação.
+     * @throws StopReadingException Para encerrar a aplicação.
+     */
+    public boolean start(Scanner scanner, BufferedReader reader, PrintWriter writer)
+            throws IOException, StopReadingException {
         while (true) {
             cleanBuffer(reader);
             System.out.println("\n--- Authentication ---");
@@ -80,6 +99,14 @@ public class UserInterface {
         }
     }
 
+    /**
+     * Mostra o menu principal após o login bem sucedido.
+     * 
+     * @param scanner Entrada do utilizador.
+     * @param reader  Leitura de mensagens do servidor.
+     * @param writer  Escrita de mensagens para o servidor.
+     * @throws IOException Em caso de erros de comunicação.
+     */
     public void displayMainMenu(Scanner scanner, BufferedReader reader, PrintWriter writer) throws IOException {
         System.out.println("--- Welcome to the CHAT <" + loggedUser.getName() + "> ---");
 
@@ -111,6 +138,10 @@ public class UserInterface {
         }
     }
 
+    /**
+     * Gere a navegação nos canais de chat baseados no nível do utilizador.
+     */
+
     private void handleChannels(Scanner scanner, BufferedReader reader, PrintWriter writer) throws IOException {
         String userRank = loggedUser.getRank().toString();
 
@@ -129,6 +160,9 @@ public class UserInterface {
         }
     }
 
+    /**
+     * Mostra opções de grupos disponíveis para o nível do utilizador.
+     */
     private void showGroupOptions(String userRank) {
         System.out.println(" --- Groups --- ");
 
@@ -149,7 +183,8 @@ public class UserInterface {
         System.out.print("Option: ");
     }
 
-    private void handleHighGroup(String option, Scanner scanner, PrintWriter writer, BufferedReader reader) throws IOException {
+    private void handleHighGroup(String option, Scanner scanner, PrintWriter writer, BufferedReader reader)
+            throws IOException {
         switch (option) {
             case "1":
                 joinGroup("HIGH", HIGH_MULTICAST_GROUP_PORT, highGroup, scanner, writer, reader);
@@ -167,7 +202,8 @@ public class UserInterface {
         }
     }
 
-    private void handleMediumGroup(String option, Scanner scanner, PrintWriter writer, BufferedReader reader) throws IOException {
+    private void handleMediumGroup(String option, Scanner scanner, PrintWriter writer, BufferedReader reader)
+            throws IOException {
         switch (option) {
             case "1":
                 joinGroup("MEDIUM", MEDIUM_MULTICAST_GROUP_PORT, mediumGroup, scanner, writer, reader);
@@ -182,7 +218,8 @@ public class UserInterface {
         }
     }
 
-    private void handleLowGroup(String option, Scanner scanner, PrintWriter writer, BufferedReader reader) throws IOException {
+    private void handleLowGroup(String option, Scanner scanner, PrintWriter writer, BufferedReader reader)
+            throws IOException {
         switch (option) {
             case "1":
                 joinGroup("LOW", LOW_MULTICAST_GROUP_PORT, lowGroup, scanner, writer, reader);
@@ -194,14 +231,27 @@ public class UserInterface {
         }
     }
 
-    private void joinGroup(String groupName, int port, InetAddress group, Scanner scanner, PrintWriter writer, BufferedReader reader) throws IOException {
+    /**
+     * Entra em um grupo multicast, permitindo que o utilizador envie e receba
+     * mensagens.
+     * 
+     * @param groupName Nome do grupo.
+     * @param port      Porta multicast.
+     * @param group     Endereço do grupo.
+     * @param scanner   Entrada do utilizador.
+     * @param writer    Escrita de mensagens para o servidor.
+     * @param reader    Leitura de mensagens do servidor.
+     * @throws IOException Em caso de erros de comunicação.
+     */
+    private void joinGroup(String groupName, int port, InetAddress group, Scanner scanner, PrintWriter writer,
+            BufferedReader reader) throws IOException {
         MulticastSocket multicastSocket = new MulticastSocket(port);
 
         try {
             multicastSocket.joinGroup(group);
             System.out.println("+ " + groupName.toUpperCase() + " GROUP +");
 
-            //Receber historico de mensagens
+            // Receber historico de mensagens
             getMessagesFromServer(groupName, writer, reader);
             cleanBuffer(reader);
 
@@ -255,7 +305,7 @@ public class UserInterface {
 
                     int code = Integer.valueOf(messageExtractor("/approve:", message));
                     approveOperation(writer, code);
-                    System.out.println(reader.readLine()); //Notificação do servidor
+                    System.out.println(reader.readLine()); // Notificação do servidor
 
                 } else {
                     sendMessage(multicastSocket, message, group, port);
@@ -268,25 +318,40 @@ public class UserInterface {
         }
     }
 
+    /**
+     * Aprova uma operação pendente no servidor com base em um código fornecido.
+     *
+     * @param writer Escrita de mensagens para o servidor.
+     * @param code   Código da operação a ser aprovada.
+     */
     private void approveOperation(PrintWriter writer, int code) {
         writer.println("approve");
         writer.println(code);
     }
 
+    /**
+     * Inicia uma operação especial no servidor.
+     *
+     * @param writer Escrita de mensagens para o servidor.
+     * @param msg    Mensagem associada à operação.
+     * @param opType Tipo de operação a ser iniciada.
+     */
     private void startOperation(PrintWriter writer, String msg, OperationType opType) {
 
-        String code = "";
+        String code="";
 
-        switch (opType) {
-            case OperationType.EVACUATION -> code = "opEvac";
-            case OperationType.EMERGENCY_COMUNICATION -> code = "opEmergency";
-            case OperationType.RESOURCES_DISTRIBUTION -> code = "opResources";
-        }
+        switch(opType){case OperationType.EVACUATION->code="opEvac";case OperationType.EMERGENCY_COMUNICATION->code="opEmergency";case OperationType.RESOURCES_DISTRIBUTION->code="opResources";}
 
-        writer.println(code);
-        writer.println(msg);
+        writer.println(code);writer.println(msg);
     }
 
+    /**
+     * Extrai o conteúdo de uma mensagem baseado em um prefixo específico.
+     *
+     * @param prefix  Prefixo indicando o tipo de mensagem.
+     * @param message Mensagem completa recebida.
+     * @return Conteúdo da mensagem após o prefixo.
+     */
     private String messageExtractor(String prefix, String message) {
         if (message.contains(prefix)) {
             int startIndex = message.indexOf(prefix) + prefix.length();
@@ -295,6 +360,11 @@ public class UserInterface {
         throw new InvalidOperationFormatException("Invalid format: " + prefix);
     }
 
+    /**
+     * Recebe mensagens de um grupo multicast em tempo real.
+     *
+     * @param multicastSocket Socket multicast para o grupo.
+     */
     private void receiveMessages(MulticastSocket multicastSocket) {
         try {
             while (true) {
@@ -306,29 +376,44 @@ public class UserInterface {
                 System.out.println(receivedMessage);
             }
         } catch (IOException e) {
-            //System.out.println("Erro ao receber mensagem: " + e.getMessage());
+            // System.out.println("Erro ao receber mensagem: " + e.getMessage());
         }
     }
 
-    private void sendMessage(MulticastSocket multicastSocket, String message, InetAddress group, int port) throws IOException {
+    /**
+     * Envia uma mensagem para um grupo multicast.
+     */
+    private void sendMessage(MulticastSocket multicastSocket, String message, InetAddress group, int port)
+            throws IOException {
         String fullMessage = "[" + loggedUser.getName() + "] (" + loggedUser.getRank().toString() + "): " + message;
         byte[] buffer = fullMessage.getBytes();
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, port);
         multicastSocket.send(packet);
     }
 
-    private boolean handleLogin(Scanner scanner, BufferedReader reader, PrintWriter writer) throws IOException, StopReadingException {
-        //Username
+    /**
+     * Realiza o login do utilizador no servidor.
+     *
+     * @param scanner Entrada do utilizador.
+     * @param reader  Leitura de mensagens do servidor.
+     * @param writer  Escrita de mensagens para o servidor.
+     * @return True se o login for bem-sucedido, False caso contrário.
+     * @throws IOException          Em caso de erros de comunicação.
+     * @throws StopReadingException Para encerrar a aplicação em caso de falha.
+     */
+    private boolean handleLogin(Scanner scanner, BufferedReader reader, PrintWriter writer)
+            throws IOException, StopReadingException {
+        // Username
         String askUsername = reader.readLine();
         System.out.print(askUsername);
         writer.println(scanner.nextLine());
 
-        //Password
+        // Password
         String askPassword = reader.readLine();
         System.out.print(askPassword);
         writer.println(scanner.nextLine());
 
-        //Get Message
+        // Get Message
         String serverResponse = reader.readLine();
         System.out.println(serverResponse);
 
@@ -345,32 +430,46 @@ public class UserInterface {
         return false;
     }
 
+    /**
+     * Realiza o registro de um novo utilizador no servidor.
+     *
+     * @param scanner Entrada do utilizador.
+     * @param reader  Leitura de mensagens do servidor.
+     * @param writer  Escrita de mensagens para o servidor.
+     * @throws IOException Em caso de erros de comunicação.
+     */
     private void handleRegistration(Scanner scanner, BufferedReader reader, PrintWriter writer) throws IOException {
-        //Username
+        // Username
         String askUsername = reader.readLine();
         System.out.print(askUsername);
         writer.println(scanner.nextLine());
 
-        //Rank
+        // Rank
         String askRank = reader.readLine();
         System.out.print(askRank);
         writer.println(scanner.nextLine());
 
-        //Password
+        // Password
         String askPassword = reader.readLine();
         System.out.print(askPassword);
         writer.println(scanner.nextLine());
 
-        //Repeat Password
+        // Repeat Password
         String askRepeatPassword = reader.readLine();
         System.out.print(askRepeatPassword);
         writer.println(scanner.nextLine());
 
-        //Get Message
+        // Get Message
         String serverResponse = reader.readLine();
         System.out.println(serverResponse);
     }
 
+    /**
+     * Carrega as informações do utilizador a partir de uma string CSV.
+     *
+     * @param userDataCSV Dados do utilizador recebidos no formato CSV.
+     * @return Objeto User preenchido ou null em caso de erro.
+     */
     private User loadUser(String userDataCSV) {
 
         String[] parts = userDataCSV.split(";");
@@ -388,12 +487,26 @@ public class UserInterface {
         return null;
     }
 
+    /**
+     * Limpa o buffer de leitura, garantindo que todas as mensagens pendentes sejam
+     * descartadas.
+     *
+     * @param reader Leitor de mensagens do servidor.
+     * @throws IOException Em caso de erros de comunicação.
+     */
     private void cleanBuffer(BufferedReader reader) throws IOException {
         while (reader.ready()) {
             reader.readLine();
         }
     }
 
+    /**
+     * Obtém mensagens anteriores do servidor para um grupo específico.
+     *
+     * @param groupName Nome do grupo.
+     * @param writer    Escrita de mensagens para o servidor.
+     * @param reader    Leitura de mensagens do servidor.
+     */
     private void getMessagesFromServer(String groupName, PrintWriter writer, BufferedReader reader) {
         writer.println("messagesFromGroup:" + groupName);
         String line;
