@@ -7,6 +7,17 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A classe `Server` representa o servidor responsável pela comunicação
+ * multicast e gestão das conexões com os clientes.
+ * <p>
+ * Esta classe configura a receção e envio das mensagens em grupos multicast e
+ * assegura a manutenção
+ * dos ficheiros das operações e estados dos utilizadores. Também lida com a
+ * reinicialização dos estados
+ * dos utilizadores no ficheiro de utilizadores.
+ * </p>
+ */
 public class Server {
 
     private final String HIGH_GROUP_FILENAME = "SERVER_high_group.txt";
@@ -26,10 +37,22 @@ public class Server {
 
     private int serverPort;
 
+    /**
+     * Construtor da classe Server.
+     *
+     * @param port A porta em que o servidor deve estar ativo.
+     */
     public Server(int port) {
         this.serverPort = port;
     }
 
+    /**
+     * Inicia o servidor, configura os sockets multicast e aguarda conexões dos
+     * clientes.
+     *
+     * @throws IOException Caso ocorra um erro ao configurar os sockets ou ao
+     *                     aceitar conexões.
+     */
     public void start() throws IOException {
 
         InetAddress highGroupAddress = InetAddress.getByName(HIGH_MULTICAST_GROUP_ADDRESS);
@@ -37,7 +60,7 @@ public class Server {
         InetAddress lowGroupAddress = InetAddress.getByName(LOW_MULTICAST_GROUP_ADDRESS);
 
         try {
-            resetUsersStatus(); //Alterar os estados dos utilizadores para offline
+            resetUsersStatus(); // Alterar os estados dos utilizadores para offline
             ServerSocket ss = new ServerSocket(serverPort);
 
             System.out.println("Server connected on port: " + serverPort);
@@ -48,7 +71,8 @@ public class Server {
 
             while (true) {
                 Socket clientSocket = ss.accept();
-                Thread clientThread = new Thread(new ClientHandler(clientSocket, USERS_FILE, HIGH_GROUP_FILENAME, MEDIUM_GROUP_FILENAME, LOW_GROUP_FILENAME));
+                Thread clientThread = new Thread(new ClientHandler(clientSocket, USERS_FILE, HIGH_GROUP_FILENAME,
+                        MEDIUM_GROUP_FILENAME, LOW_GROUP_FILENAME));
                 clientThread.start();
             }
 
@@ -57,6 +81,15 @@ public class Server {
         }
     }
 
+    /**
+     * Junta o servidor a um grupo multicast na porta especificada.
+     *
+     * @param port     A porta onde o grupo multicast está configurado.
+     * @param group    O endereço multicast do grupo.
+     * @param fileName O nome do ficheiro onde as mensagens do grupo são
+     *                 armazenadas.
+     * @throws IOException Caso ocorra um erro ao juntar ao grupo multicast.
+     */
     private void joinGroup(int port, InetAddress group, String fileName) throws IOException {
         MulticastSocket multicastSocket = new MulticastSocket(port);
         try {
@@ -76,6 +109,13 @@ public class Server {
         }
     }
 
+    /**
+     * Recebe mensagens multicast e armazena no ficheiro correspondente.
+     *
+     * @param multicastSocket O socket multicast usado para receção das mensagens.
+     * @param fileName        O nome do ficheiro onde a mensagem será armazenada.
+     * @throws IOException Caso ocorra um erro ao receber ou gravar a mensagem.
+     */
     private void receiveAndSaveMessages(MulticastSocket multicastSocket, String fileName) throws IOException {
         try {
             while (true) {
@@ -89,21 +129,33 @@ public class Server {
                 DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
                 String formattedDate = myDateObj.format(myFormatObj);
 
-                //String fullMessage = "<" + formattedDate + ">" + receivedMessage + "\n";
+                // String fullMessage = "<" + formattedDate + ">" + receivedMessage + "\n";
                 String fullMessage = receivedMessage + "\n";
                 saveMessageToFile(fullMessage, fileName);
             }
         } catch (IOException e) {
-            //System.out.println("Erro ao receber mensagem: " + e.getMessage());
+            // System.out.println("Erro ao receber mensagem: " + e.getMessage());
         }
     }
 
+    /**
+     * Grava mensagens no ficheiro especificado.
+     *
+     * @param message  A mensagem a ser armazenada no ficheiro.
+     * @param fileName O nome do ficheiro onde a mensagem será armazenada.
+     * @throws IOException Caso ocorra um erro ao gravar a mensagem.
+     */
     private void saveMessageToFile(String message, String fileName) throws IOException {
         FileWriter fileWriter = new FileWriter(fileName, true);
         fileWriter.append(message);
         fileWriter.close();
     }
 
+    /**
+     * Reseta o estado dos utilizadores para offline no ficheiro Users.csv.
+     *
+     * @throws IOException Caso ocorra um erro ao acessar o ficheiro.
+     */
     private void resetUsersStatus() throws IOException {
         List<String> updatedLines = new ArrayList<>();
 
@@ -128,6 +180,11 @@ public class Server {
         }
     }
 
+    /**
+     * O método principal que cria a instância do servidor e inicia a aplicação.
+     *
+     * @param args Argumentos da linha de comando.
+     */
     public static void main(String[] args) {
 
         try {
@@ -138,6 +195,5 @@ public class Server {
         }
 
     }
-
 
 }

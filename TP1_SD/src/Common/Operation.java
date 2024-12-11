@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Classe Operation.
+ */
 public class Operation {
 
     private static int id = 0;
@@ -21,6 +24,14 @@ public class Operation {
     private String dateRequested;
     private String dateResponded;
 
+    /**
+     * Construtor da classe Operation.
+     * Inicializa uma operação com o tipo, utilizador locutor e mensagem.
+     * 
+     * @param type    Tipo de operação.
+     * @param locutor Utilizador que solicita a operação.
+     * @param msg     Mensagem associada à operação.
+     */
     public Operation(OperationType type, User locutor, String msg) {
         this.id++;
 
@@ -37,7 +48,19 @@ public class Operation {
         }
     }
 
-    public Operation(int id, User user, OperationType opType, String opMsg, OperationStatus opStatus, String dateRequested, String dateResponded) {
+    /**
+     * Construtor completo da classe Operation sem interlocutor.
+     * 
+     * @param id            Identificador da operação.
+     * @param user          Utilizador locutor.
+     * @param opType        Tipo de operação.
+     * @param opMsg         Mensagem associada à operação.
+     * @param opStatus      Estado da operação.
+     * @param dateRequested Data do pedido.
+     * @param dateResponded Data da resposta.
+     */
+    public Operation(int id, User user, OperationType opType, String opMsg, OperationStatus opStatus,
+            String dateRequested, String dateResponded) {
         this.id = id;
         this.locutor = user;
         this.interlocutor = null;
@@ -48,7 +71,20 @@ public class Operation {
         this.dateResponded = dateResponded;
     }
 
-    public Operation(int id, User locutor, User interlocutor, OperationType opType, String opMsg, OperationStatus opStatus, String dateRequested, String dateResponded) {
+    /**
+     * Construtor completo da classe Operation com interlocutor.
+     * 
+     * @param id            Identificador da operação.
+     * @param locutor       Utilizador que solicitou a operação.
+     * @param interlocutor  Utilizador que aprovou/rejeitou a operação.
+     * @param opType        Tipo de operação.
+     * @param opMsg         Mensagem associada à operação.
+     * @param opStatus      Estado da operação.
+     * @param dateRequested Data do pedido.
+     * @param dateResponded Data da resposta.
+     */
+    public Operation(int id, User locutor, User interlocutor, OperationType opType, String opMsg,
+            OperationStatus opStatus, String dateRequested, String dateResponded) {
         this.id = id;
         this.locutor = locutor;
         this.interlocutor = interlocutor;
@@ -59,6 +95,12 @@ public class Operation {
         this.dateResponded = dateResponded;
     }
 
+    /**
+     * Aprova ou rejeita uma operação.
+     * 
+     * @param user     Utilizador que responde à operação.
+     * @param approved Booleano indicando se a operação foi aprovada.
+     */
     public void approve(User user, boolean approved) {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null.");
@@ -78,18 +120,34 @@ public class Operation {
         }
     }
 
-
-    public String getMsg(){
+    /**
+     * Obtém a mensagem associada à operação.
+     * 
+     * @return Mensagem da operação.
+     */
+    public String getMsg() {
         return msg;
     }
 
-    private String actualDate(){
+    /**
+     * Obtém a data e hora atual no formato "dd-MM-yyyy HH:mm:ss".
+     * 
+     * @return String com a data e hora formatada.
+     */
+    private String actualDate() {
         LocalDateTime myDateObj = LocalDateTime.now();
         DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
         return myDateObj.format(myFormatObj);
     }
 
+    /**
+     * Valida o tipo de operação com base no rank do utilizador.
+     * 
+     * @param type     Tipo de operação.
+     * @param userRank Rank do utilizador.
+     * @return true se o utilizador tiver permissão, false caso contrário.
+     */
     public boolean validateTypeAndRank(OperationType type, Rank userRank) {
         switch (type) {
             case EVACUATION:
@@ -106,7 +164,7 @@ public class Operation {
         }
     }
 
-
+    // Métodos getter e setter para os atributos.
     public static int getId() {
         return id;
     }
@@ -167,17 +225,27 @@ public class Operation {
         this.dateResponded = dateResponded;
     }
 
-    public String getOperationServerMessage(){
+    /**
+     * Obtém uma mensagem detalhada do servidor sobre a operação.
+     * 
+     * @return String com a mensagem do servidor.
+     */
+    public String getOperationServerMessage() {
         String str = "\n*SERVER MESSAGE* -> EXECUTE OPERATION - " + type + "\n"
-                    + "Date: " + dateRequested + "\n"
-                    + "Sender: " + locutor.getName() + " (" + locutor.getRank() + ")" + "\n"
-                    + "Accepted By: " + interlocutor.getName() + " (" + interlocutor.getRank() + ")" + "\n"
-                    + "Message: " + msg + "\n";
+                + "Date: " + dateRequested + "\n"
+                + "Sender: " + locutor.getName() + " (" + locutor.getRank() + ")" + "\n"
+                + "Accepted By: " + interlocutor.getName() + " (" + interlocutor.getRank() + ")" + "\n"
+                + "Message: " + msg + "\n";
 
         return str;
     }
 
-    public String getApprovalRequestMessage(){
+    /**
+     * Obtém uma mensagem de pedido de aprovação da operação.
+     * 
+     * @return String com o pedido de aprovação.
+     */
+    public String getApprovalRequestMessage() {
         String str = "\n-OPERATION REQUEST- " + type + "\n"
                 + "Date: " + dateRequested + "\n"
                 + "Sender: " + locutor.getName() + " (" + locutor.getRank() + ")" + "\n"
@@ -187,16 +255,30 @@ public class Operation {
         return str;
     }
 
+    /**
+     * Converte os atributos da operação para uma string no formato CSV.
+     * 
+     * @param chr Delimitador para o CSV.
+     * @return String no formato CSV.
+     */
     public String toCSV(String chr) {
         String str = "";
         if (interlocutor == null) {
-            str = id + chr + locutor.getName() + chr + type.toString() + chr + msg + chr + status + chr + dateRequested + chr + dateResponded + "\n";
+            str = id + chr + locutor.getName() + chr + type.toString() + chr + msg + chr + status + chr + dateRequested
+                    + chr + dateResponded + "\n";
         } else {
-            str = id + chr + locutor.getName() + chr + interlocutor.getName() + chr + type.toString() + chr + msg + chr + status + chr + dateRequested + chr + dateResponded + "\n";
+            str = id + chr + locutor.getName() + chr + interlocutor.getName() + chr + type.toString() + chr + msg + chr
+                    + status + chr + dateRequested + chr + dateResponded + "\n";
         }
         return str;
     }
 
+    /**
+     * Escreve os dados da operação num ficheiro.
+     * 
+     * @param file Caminho do ficheiro onde os dados serão escritos.
+     * @throws IOException Lança uma exceção se ocorrer um erro de I/O.
+     */
     public void writeToFile(String file) throws IOException {
 
         FileWriter fileWriter = new FileWriter(file, true);

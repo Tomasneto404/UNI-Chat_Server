@@ -16,8 +16,13 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-/***
- * This class is ....
+/**
+ * A classe ClientHandler é responsável por gerir a comunicação entre o servidor
+ * e os clientes.
+ * Ela processa solicitações dos clientes, autentica usuários, realiza
+ * operações, envia mensagens em grupos multicast
+ * e aprova solicitações de operações. A comunicação é feita principalmente
+ * através de sockets TCP e multicast.
  */
 public class ClientHandler implements Runnable {
 
@@ -44,8 +49,17 @@ public class ClientHandler implements Runnable {
 
     private User loggedUser;
 
-
-    public ClientHandler(Socket clientSocket, String usersFile, String highGroupFile, String mediumGroupFile, String lowGroupFile) {
+    /**
+     * Construtor da classe ClientHandler.
+     * 
+     * @param clientSocket    Socket utilizado para comunicação com o cliente.
+     * @param usersFile       Caminho do ficheiro que armazena os usuários.
+     * @param highGroupFile   Caminho do ficheiro de mensagens do grupo HIGH.
+     * @param mediumGroupFile Caminho do ficheiro de mensagens do grupo MEDIUM.
+     * @param lowGroupFile    Caminho do ficheiro de mensagens do grupo LOW.
+     */
+    public ClientHandler(Socket clientSocket, String usersFile, String highGroupFile, String mediumGroupFile,
+            String lowGroupFile) {
         this.clientSocket = clientSocket;
         this.users = new ArrayList<>();
         this.operations = new ArrayList<>();
@@ -56,6 +70,10 @@ public class ClientHandler implements Runnable {
     }
 
     @Override
+    /**
+     * Método principal da thread que executa a comunicação entre cliente e
+     * servidor.
+     */
     public synchronized void run() {
 
         try {
@@ -63,7 +81,8 @@ public class ClientHandler implements Runnable {
             PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true);
             BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-            System.out.println("Client from " + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort() + " connected!");
+            System.out.println("Client from " + clientSocket.getInetAddress().getHostAddress() + ":"
+                    + clientSocket.getPort() + " connected!");
 
             while (true) {
                 loadUsersFromFile();
@@ -109,13 +128,14 @@ public class ClientHandler implements Runnable {
                             updateUserStatus(loggedUser, true);
 
                             writer.println("Login completed successfully!");
-                            writer.println(loggedUser.toCSV(";")); //Envia dados do User para o client
+                            writer.println(loggedUser.toCSV(";")); // Envia dados do User para o client
                             System.out.println("User <" + loggedUser.getName() + "> has been logged in!");
 
                         } else {
                             writer.println("Login failed. Returning ...");
-                            writer.println("None"); //Envia os dados do User como None
-                            System.out.println("Client from " + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort() + " failed to login!");
+                            writer.println("None"); // Envia os dados do User como None
+                            System.out.println("Client from " + clientSocket.getInetAddress().getHostAddress() + ":"
+                                    + clientSocket.getPort() + " failed to login!");
                         }
                         break;
 
@@ -125,7 +145,8 @@ public class ClientHandler implements Runnable {
                             updateUserStatus(loggedUser, false);
                             System.out.println("User <" + loggedUser.getName() + "> disconnected!");
                         } else {
-                            System.out.println("Client from " + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort() + " disconnected!");
+                            System.out.println("Client from " + clientSocket.getInetAddress().getHostAddress() + ":"
+                                    + clientSocket.getPort() + " disconnected!");
                         }
                         writer.println("Disconnected!");
                         clientSocket.close();
@@ -186,6 +207,13 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Realiza o login do usuário.
+     *
+     * @param reader BufferedReader para leitura das solicitações do cliente.
+     * @param writer PrintWriter para envio das respostas ao cliente.
+     * @return O usuário autenticado.
+     */
     private User loginUser(BufferedReader reader, PrintWriter writer) throws IOException {
 
         writer.println("Enter Username: ");
@@ -199,6 +227,12 @@ public class ClientHandler implements Runnable {
         return searchUser(tmpUser);
     }
 
+    /**
+     * Registra um novo usuário no sistema.
+     *
+     * @param reader BufferedReader para leitura das solicitações do cliente.
+     * @param writer PrintWriter para envio das respostas ao cliente.
+     */
     private User registUser(BufferedReader reader, PrintWriter writer) throws IOException {
 
         writer.println("Enter Username: ");
@@ -242,10 +276,17 @@ public class ClientHandler implements Runnable {
 
     }
 
+    /**
+     * Envia mensagens dos grupos multicast ao cliente.
+     *
+     * @param filePath Caminho do ficheiro contendo as mensagens do grupo.
+     * @param writer   PrintWriter usado para comunicação.
+     */
     public User searchUser(User userToSearch) {
         if (!users.isEmpty()) {
             for (User user : users) {
-                if (user.getName().equals(userToSearch.getName()) && user.getPassword().equals(userToSearch.getPassword())) {
+                if (user.getName().equals(userToSearch.getName())
+                        && user.getPassword().equals(userToSearch.getPassword())) {
                     return user;
                 }
             }
@@ -253,6 +294,9 @@ public class ClientHandler implements Runnable {
         return null;
     }
 
+    /**
+     * Carrega os utilizadores a partir do ficheiro.
+     */
     private void loadUsersFromFile() {
         try {
 
@@ -279,6 +323,22 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Envia as mensagens armazenadas num ficheiro para um destino através do objeto
+     * PrintWriter.
+     * 
+     * Este método lê o conteúdo do ficheiro especificado linha a linha e envia cada
+     * linha através
+     * do PrintWriter. No final, envia um marcador especial "END_OF_MESSAGES" para
+     * sinalizar que
+     * todas as mensagens foram enviadas. Garante que todos os recursos são fechados
+     * corretamente,
+     * mesmo em caso de erros.
+     * 
+     * @param filePath O caminho do ficheiro contendo as mensagens a serem enviadas.
+     * @param writer   O objeto PrintWriter usado para enviar as mensagens ao
+     *                 destino (socket, console, etc.).
+     */
     private void sendGroupMessages(String filePath, PrintWriter writer) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
@@ -294,6 +354,12 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Atualiza o estado do utilizador no ficheiro.
+     *
+     * @param user   O utilizador a atualizar.
+     * @param status true se estiver ativo, false caso contrário.
+     */
     private void updateUserStatus(User user, Boolean status) throws IOException {
         List<String> updatedLines = new ArrayList<>();
 
@@ -317,6 +383,15 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Trata a operação de evacuação.
+     * Este método lê a mensagem do BufferedReader, cria um objeto `Operation` do
+     * tipo EVACUATION,
+     * grava a operação num ficheiro e envia a solicitação de aprovação ao grupo
+     * multicast de alta prioridade.
+     * 
+     * @param reader O objeto `BufferedReader` usado para ler a mensagem do cliente.
+     */
     private void handleEvacOperation(BufferedReader reader) {
         try {
             InetAddress highGroupAddress = InetAddress.getByName(HIGH_MULTICAST_GROUP_ADDRESS);
@@ -333,6 +408,15 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Trata a operação de comunicação de emergência.
+     * Este método lê a mensagem do BufferedReader, cria um objeto `Operation` do
+     * tipo EMERGENCY_COMUNICATION,
+     * grava a operação num ficheiro e envia a solicitação de aprovação aos grupos
+     * multicast de alta e média prioridade.
+     * 
+     * @param reader O objeto `BufferedReader` usado para ler a mensagem.
+     */
     private void handleEmergencyOperation(BufferedReader reader) {
         try {
             InetAddress highGroupAddress = InetAddress.getByName(HIGH_MULTICAST_GROUP_ADDRESS);
@@ -351,6 +435,15 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Trata a operação de distribuição de recursos.
+     * Este método lê a mensagem do BufferedReader, cria um objeto `Operation` do
+     * tipo RESOURCES_DISTRIBUTION,
+     * grava a operação num ficheiro e envia a solicitação de aprovação aos grupos
+     * multicast de alta, média e baixa prioridade.
+     * 
+     * @param reader O objeto `BufferedReader` usado para ler a mensagem.
+     */
     private void handleResourceDistributionOperation(BufferedReader reader) {
         try {
             InetAddress highGroupAddress = InetAddress.getByName(HIGH_MULTICAST_GROUP_ADDRESS);
@@ -371,6 +464,15 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Envia uma solicitação de aprovação de operação a um grupo multicast
+     * específico.
+     *
+     * @param operation Objeto da operação a ser aprovada.
+     * @param group     Endereço do grupo multicast.
+     * @param port      Porta do grupo multicast.
+     * @throws IOException Caso haja um erro ao enviar a mensagem.
+     */
     private void sendApproveOperationRequest(Operation operation, InetAddress group, int port) throws IOException {
         MulticastSocket multicastSocket = new MulticastSocket(port);
         multicastSocket.joinGroup(group);
@@ -381,10 +483,10 @@ public class ClientHandler implements Runnable {
     }
 
     /**
-     * Aprovar Operações
+     * Aprova as solicitações das operações em grupo multicast.
      *
-     * @param reader
-     * @param writer
+     * @param reader BufferedReader para leitura das solicitações do cliente.
+     * @param writer PrintWriter para envio das respostas.
      */
     private void handleApproveRequest(BufferedReader reader, PrintWriter writer) {
         try {
@@ -431,6 +533,11 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Atualiza as operações no ficheiro.
+     *
+     * @param operation A operação a ser aprovada ou atualizada.
+     */
     private void updateOperationsInFile(Operation operation) {
         List<String> fileContent = new ArrayList<>();
         boolean updated = false;
@@ -464,6 +571,11 @@ public class ClientHandler implements Runnable {
 
     }
 
+    /**
+     * Inicializa a operação e a guarda na lista de operações.
+     *
+     * @param operation A operação que será iniciada.
+     */
     private void InitOperation(Operation op) {
         try {
             InetAddress highGroupAddress = InetAddress.getByName(HIGH_MULTICAST_GROUP_ADDRESS);
@@ -487,6 +599,14 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Envia a mensagem das operações ao grupo multicast especificado.
+     *
+     * @param operation Objeto da operação a ser enviada.
+     * @param group     Endereço multicast do grupo.
+     * @param port      Porta utilizada para enviar a mensagem.
+     * @throws IOException Caso ocorra um erro ao enviar a mensagem.
+     */
     private void sendOperationMsg(Operation operation, InetAddress group, int port) throws IOException {
         MulticastSocket multicastSocket = new MulticastSocket(port);
         multicastSocket.joinGroup(group);
@@ -496,6 +616,18 @@ public class ClientHandler implements Runnable {
         multicastSocket.send(packet);
     }
 
+    /**
+     * Pesquisa e retorna uma operação específica pela sua ID.
+     * 
+     * Este método procura na lista `operations` por uma instância de `Operation`
+     * cujo identificador coincide
+     * com o fornecido. Caso encontre a operação, retorna o objeto; caso contrário,
+     * retorna `null`.
+     * 
+     * @param id O identificador único da operação a ser pesquisada.
+     * @return A instância da operação correspondente ao ID, ou `null` se não
+     *         existir.
+     */
     private Operation searchOperationById(int id) {
         for (Operation operation : operations) {
             if (operation.getId() == id) {
@@ -505,6 +637,20 @@ public class ClientHandler implements Runnable {
         return null;
     }
 
+    /**
+     * Carrega as operações do ficheiro de operações no sistema.
+     * 
+     * Este método lê o ficheiro especificado (`operationsFile`), parseia cada linha
+     * e cria instâncias de
+     * objetos `Operation`. Adiciona essas operações à lista `operations`. Suporta
+     * dois formatos de linhas:
+     * 
+     * - Um ficheiro com **7 partes**, representando a operação sem aprovador.
+     * - Um ficheiro com **8 partes**, representando a operação com aprovador.
+     * 
+     * Caso ocorra algum erro ao ler ou parsear o ficheiro, a mensagem do erro é
+     * exibida no console.
+     */
     private void loadOperationsFromFile() {
         try {
             BufferedReader br = new BufferedReader(new FileReader(operationsFile));
@@ -526,7 +672,6 @@ public class ClientHandler implements Runnable {
 
                     operations.add(new Operation(id, user, opType, opMsg, opStatus, dateRequested, dateResponded));
 
-
                 } else if (parts.length == 8) {
 
                     int id = Integer.parseInt(parts[0]);
@@ -541,7 +686,8 @@ public class ClientHandler implements Runnable {
                     User locutor = findUser(new User(sender));
                     User interlocutor = findUser(new User(approver));
 
-                    operations.add(new Operation(id, locutor, interlocutor, opType, opMsg, opStatus, dateRequested, dateResponded));
+                    operations.add(new Operation(id, locutor, interlocutor, opType, opMsg, opStatus, dateRequested,
+                            dateResponded));
                 }
             }
         } catch (IOException e) {
@@ -549,6 +695,12 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Procura um utilizador na lista de utilizadores.
+     *
+     * @param userToFind Objeto do utilizador que se deseja encontrar.
+     * @return O utilizador encontrado ou null caso não exista.
+     */
     public User findUser(User userToFind) {
         if (!users.isEmpty()) {
             for (User user : users) {
@@ -560,6 +712,18 @@ public class ClientHandler implements Runnable {
         return null;
     }
 
+    /**
+     * Limpa o conteúdo restante no buffer do BufferedReader.
+     * 
+     * Este método lê e descarta todas as linhas restantes no buffer do
+     * `BufferedReader` até que não existam mais linhas.
+     * Isto é útil para garantir que qualquer dado residual no buffer seja ignorado
+     * antes de realizar operações subsequentes.
+     *
+     * @param reader O objeto `BufferedReader` que deve ser limpo.
+     * @throws IOException Caso ocorra um erro ao ler o ficheiro ou o fluxo de
+     *                     entrada.
+     */
     private void cleanBuffer(BufferedReader reader) throws IOException {
         while (reader.ready()) {
             reader.readLine();
