@@ -1,5 +1,3 @@
 0;Tomas;wasd;HIGH;true
-0;asd;asd;LOW;false
-0;xs;xs;MEDIUM;false
-0;mico;wasd;LOW;true
-0;kiko;wasd;LOW;true
+0;kiko;wasd;MEDIUM;true
+0;test;wasd;LOW;true

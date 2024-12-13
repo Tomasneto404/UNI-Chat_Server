@@ -10,12 +10,14 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import java.util.Random;
+
 /**
  * Classe Operation.
  */
 public class Operation {
 
-    private static int id = 0;
+    private int id;
     private User locutor;
     private User interlocutor;
     private OperationType type;
@@ -33,7 +35,8 @@ public class Operation {
      * @param msg     Mensagem associada à operação.
      */
     public Operation(OperationType type, User locutor, String msg) {
-        this.id++;
+        Random random = new Random();
+        this.id = 100 + random.nextInt(900);
 
         this.type = type;
         this.locutor = locutor;
@@ -165,12 +168,12 @@ public class Operation {
     }
 
     // Métodos getter e setter para os atributos.
-    public static int getId() {
+    public int getId() {
         return id;
     }
 
-    public static void setId(int id) {
-        Operation.id = id;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public User getLocutor() {
@@ -265,11 +268,14 @@ public class Operation {
         String str = "";
         if (interlocutor == null) {
             str = id + chr + locutor.getName() + chr + type.toString() + chr + msg + chr + status + chr + dateRequested
-                    + chr + dateResponded + "\n";
+                    + chr + dateResponded;
         } else {
             str = id + chr + locutor.getName() + chr + interlocutor.getName() + chr + type.toString() + chr + msg + chr
-                    + status + chr + dateRequested + chr + dateResponded + "\n";
+                    + status + chr + dateRequested + chr + dateResponded;
         }
+
+        str += "\n";
+
         return str;
     }
 

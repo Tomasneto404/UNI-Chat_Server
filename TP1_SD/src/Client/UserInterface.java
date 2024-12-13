@@ -304,8 +304,9 @@ public class UserInterface {
                 } else if (message.startsWith("/approve:")) {
 
                     int code = Integer.valueOf(messageExtractor("/approve:", message));
+                    //System.out.println(code);
                     approveOperation(writer, code);
-                    System.out.println(reader.readLine()); // Notificação do servidor
+                    System.out.println(reader.readLine());
 
                 } else {
                     sendMessage(multicastSocket, message, group, port);

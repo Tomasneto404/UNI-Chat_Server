@@ -171,19 +171,16 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case "opEvac":
-                        loadOperationsFromFile();
                         handleEvacOperation(reader);
                         cleanBuffer(reader);
                         break;
 
                     case "opEmergency":
-                        loadOperationsFromFile();
                         handleEmergencyOperation(reader);
                         cleanBuffer(reader);
                         break;
 
                     case "opResources":
-                        loadOperationsFromFile();
                         handleResourceDistributionOperation(reader);
                         cleanBuffer(reader);
                         break;
@@ -276,12 +273,7 @@ public class ClientHandler implements Runnable {
 
     }
 
-    /**
-     * Envia mensagens dos grupos multicast ao cliente.
-     *
-     * @param filePath Caminho do ficheiro contendo as mensagens do grupo.
-     * @param writer   PrintWriter usado para comunicação.
-     */
+
     public User searchUser(User userToSearch) {
         if (!users.isEmpty()) {
             for (User user : users) {
@@ -574,7 +566,7 @@ public class ClientHandler implements Runnable {
     /**
      * Inicializa a operação e a guarda na lista de operações.
      *
-     * @param operation A operação que será iniciada.
+     * @param op A operação que será iniciada.
      */
     private void InitOperation(Operation op) {
         try {
@@ -629,6 +621,12 @@ public class ClientHandler implements Runnable {
      *         existir.
      */
     private Operation searchOperationById(int id) {
+
+        for (Operation op : operations) {
+            //debug
+            System.out.println(op.toCSV(";"));
+        }
+
         for (Operation operation : operations) {
             if (operation.getId() == id) {
                 return operation;
