@@ -1,3 +1,39 @@
 [test] (LOW): ola
 [kiko] (MEDIUM): Ganda fixe
 [Tomas] (HIGH): Sou lindo
+
+-OPERATION REQUEST- RESOURCES_DISTRIBUTION
+Date: 16-12-2024 12:53:53
+Sender: kiko (MEDIUM)
+Code: 326
+Message: DSITRUBUIR RECURSOS
+
+
+*SERVER MESSAGE* -> EXECUTE OPERATION - RESOURCES_DISTRIBUTION
+Date: 16-12-2024 12:53:53
+Sender: kiko (MEDIUM)
+Accepted By: Tomas (HIGH)
+Message: DSITRUBUIR RECURSOS
+
+
+*SERVER MESSAGE* -> EXECUTE OPERATION - EVACUATION
+Date: 16-12-2024 12:57:54
+Sender: Tomas (HIGH)
+Accepted By: tania (HIGH)
+Message: wasdada
+
+
+-OPERATION REQUEST- RESOURCES_DISTRIBUTION
+Date: 16-12-2024 13:23:56
+Sender: test (LOW)
+Code: 335
+Message: mensagem
+
+
+*SERVER MESSAGE* -> EXECUTE OPERATION - RESOURCES_DISTRIBUTION
+Date: 16-12-2024 13:23:56
+Sender: test (LOW)
+Accepted By: Tomas (HIGH)
+Message: mensagem
+
+[Tomas] (HIGH): Teste de mensagem

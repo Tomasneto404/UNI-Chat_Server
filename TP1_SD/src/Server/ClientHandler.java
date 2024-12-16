@@ -541,7 +541,7 @@ public class ClientHandler implements Runnable {
                 int currentOperationId = Integer.parseInt(parts[0]);
 
                 if (currentOperationId == operation.getId()) {
-                    line = operation.toCSV(";");
+                    //line = operation.toCSV(";");
                     updated = true;
                 }
 
