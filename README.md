@@ -1,8 +1,8 @@
-# Trabalho_SD - Chat Server (JAVA) - 3º Ano - LSIRC (2024/2025)
+# Trabalho Prático 1 - Chat Server (JAVA) - LSIRC - 3º ANO (2024/2025)
 
 ## Desenvolvido por:
 Tomás Neto <br>
 Tânia Morais
 
-## Finalizado em:
+## Data da defesa:
 16/12/2024
